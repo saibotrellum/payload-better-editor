@@ -25,6 +25,10 @@ export type LiveEditorOverlayProps = {
   blocksField: string
   storageNamespace?: string
   adminPortalSelector?: string
+  /** Selection state, owned by the toggle so it survives close/reopen and is
+   *  reachable through `useBlockSelection` from outside the overlay. */
+  selectedBlockPath: string | null
+  setSelectedBlockPath: React.Dispatch<React.SetStateAction<string | null>>
 }
 
 const RESIZE_HANDLE_PX = 6
@@ -37,11 +41,16 @@ export const LiveEditorOverlay: React.FC<LiveEditorOverlayProps> = ({
   blocksField,
   storageNamespace,
   adminPortalSelector,
+  selectedBlockPath,
+  setSelectedBlockPath,
 }) => {
-  // Selection state lives outside OverlayProviders so the error boundary's
-  // onReset can clear it without remounting providers.
-  const [selectedBlockPath, setSelectedBlockPath] = useState<string | null>(null)
-  const clearSelection = useCallback(() => setSelectedBlockPath(null), [])
+  // The selection lives in the toggle, above this component, so the error
+  // boundary's onReset can still clear it without remounting providers - and
+  // so it survives the overlay being closed and reopened.
+  const clearSelection = useCallback(
+    () => setSelectedBlockPath(null),
+    [setSelectedBlockPath],
+  )
 
   return (
     <OverlayProviders

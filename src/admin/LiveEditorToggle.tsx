@@ -8,6 +8,10 @@ import { useMainWrapperPortal } from '../hooks/useMainWrapperPortal.js'
 import { buildStorageKeys } from '../internal/storage-keys.js'
 import { LayoutIcon } from './icons.js'
 import { useBetterEditorT } from '../i18n/useBetterEditorT.js'
+import {
+  BlockSelectionProvider,
+  useBlockSelection,
+} from '../providers/BlockSelectionProvider.js'
 import '../styles/toggle.css'
 
 type Pref = { open?: boolean }
@@ -19,12 +23,28 @@ export type LiveEditorToggleProps = {
   hideToggleLabel?: boolean
 }
 
-export const LiveEditorToggle: React.FC<LiveEditorToggleProps> = ({
+/**
+ * Wraps the toggle in the selection provider so a consumer's own navigation UI
+ * - rendered anywhere in the edit view, not only inside the overlay - can read
+ * and drive the selection. The provider stays mounted even when the button
+ * itself is hidden for want of a preview URL.
+ */
+export const LiveEditorToggle: React.FC<LiveEditorToggleProps> = (props) => (
+  // Defers to an app-level provider when one is registered, so a consumer's
+  // own navigation UI shares this selection; otherwise it owns the state
+  // itself and the overlay behaves exactly as it did before.
+  <BlockSelectionProvider>
+    <LiveEditorToggleInner {...props} />
+  </BlockSelectionProvider>
+)
+
+const LiveEditorToggleInner: React.FC<LiveEditorToggleProps> = ({
   blocksField,
   adminPortalSelector,
   storageNamespace,
   hideToggleLabel,
 }) => {
+  const { selectedBlockPath, setSelectedBlockPath } = useBlockSelection()
   const [open, setOpen] = useState(false)
   const { collectionSlug, globalSlug } = useDocumentInfo()
   const { previewURL } = useLivePreviewContext()
@@ -93,6 +113,8 @@ export const LiveEditorToggle: React.FC<LiveEditorToggleProps> = ({
               blocksField={blocksField}
               storageNamespace={storageNamespace}
               adminPortalSelector={adminPortalSelector}
+              selectedBlockPath={selectedBlockPath}
+              setSelectedBlockPath={setSelectedBlockPath}
             />,
             mountNode,
           )
