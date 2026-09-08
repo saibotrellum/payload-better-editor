@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org).
 
+## [Unreleased]
+### Fixed
+- Installing the package straight from git now ships built code. `dist/` is gitignored and the package only defined `prepublishOnly`, which fires for a registry publish - a git or `file:` dependency runs `prepare`, so the install completed with no `dist/` at all and the first import threw `ERR_MODULE_NOT_FOUND`. The failure surfaced at deploy time rather than install time, because the install itself reported success.
+
 ## [1.4.1]
 ### Fixed
 - Relative imports in the built package now carry file extensions, so the package loads under Node's native ESM resolver — not just under bundlers. Previously anything on Node's resolver (Vitest, `tsx`/`node` scripts importing a Payload config with the plugin registered) threw `ERR_MODULE_NOT_FOUND` at import time, while bundlers (Next/Turbopack) masked it. ([#29](https://github.com/scorpio-99/payload-better-editor/issues/29))
