@@ -1,5 +1,5 @@
 {
-  "name": "payload-better-editor",
+  "name": "@saibotrellum/payload-better-editor",
   "version": "1.4.1",
   "description": "Block editor plugin for Payload CMS that adds a side-by-side live-preview iframe and sidebar to the edit view.",
   "license": "MIT",
@@ -97,7 +97,6 @@
     "pnpm": "^9 || ^10"
   },
   "publishConfig": {
-    "access": "public",
-    "registry": "https://registry.npmjs.org/"
+    "access": "public"
   }
 }

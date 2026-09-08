@@ -42,6 +42,19 @@ jobs:
       - run: pnpm test
       - run: pnpm clean && pnpm build
 
+      - name: Publish to npm
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          CURRENT_VER=$(node -p "require('./package.json').version")
+          if npm view @saibotrellum/payload-better-editor@$CURRENT_VER version >/dev/null 2>&1; then
+            echo "Version $CURRENT_VER already published to npm, skipping."
+          else
+            echo "Publishing @saibotrellum/payload-better-editor@$CURRENT_VER to npm..."
+            pnpm config set "//registry.npmjs.org/:_authToken" "$NPM_TOKEN"
+            pnpm publish --access public --no-git-checks
+          fi
+
       - name: Pack
         id: pack
         run: |
@@ -52,7 +65,7 @@ jobs:
           TAG="integration-${BASE}-${{ github.run_number }}"
           pnpm pack --pack-destination /tmp
           # `pnpm pack` names the file from package.json, not from our tag.
-          mv /tmp/payload-better-editor-*.tgz "/tmp/${TAG}.tgz"
+          mv /tmp/*payload-better-editor-*.tgz "/tmp/${TAG}.tgz"
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
           echo "file=/tmp/${TAG}.tgz" >> "$GITHUB_OUTPUT"
           tar -tzf "/tmp/${TAG}.tgz" | sort
