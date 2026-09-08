@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org).
 
 ## [Unreleased]
 ### Fixed
-- Installing the package straight from git now ships built code. `dist/` is gitignored and the package only defined `prepublishOnly`, which fires for a registry publish - a git or `file:` dependency runs `prepare`, so the install completed with no `dist/` at all and the first import threw `ERR_MODULE_NOT_FOUND`. The failure surfaced at deploy time rather than install time, because the install itself reported success.
+- Installing the package straight from git now ships built code, given `onlyBuiltDependencies` in the consuming project (README says where). `dist/` is gitignored and the package only defined `prepublishOnly`, which fires for a registry publish - a git or `file:` dependency runs `prepare`, so the install completed with no `dist/` at all and the first import threw `ERR_MODULE_NOT_FOUND`. The failure surfaced at deploy time rather than install time, because the install itself reported success.
 
 ## [1.4.1]
 ### Fixed

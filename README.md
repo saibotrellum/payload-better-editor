@@ -41,6 +41,19 @@ Switch between Desktop, Tablet, Mobile, and Responsive (drag-resizable). The ful
 pnpm add payload-better-editor
 ```
 
+Installing from git instead of the registry needs one line in the consuming
+project, because pnpm 10 blocks dependency build scripts by default and the
+published `dist/` is not in the repository:
+
+```yaml
+# pnpm-workspace.yaml
+onlyBuiltDependencies:
+  - payload-better-editor
+```
+
+Without it the install still reports success and the first import fails with
+`ERR_MODULE_NOT_FOUND`.
+
 See [DEVELOPERS.md](./DEVELOPERS.md) for setup, plugin options, runtime settings, and architecture notes.
 
 ## Requirements
