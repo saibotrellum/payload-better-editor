@@ -11,7 +11,13 @@ import { useSidebarResize } from '../../src/hooks/useSidebarResize'
 afterEach(() => {
   cleanup()
   vi.restoreAllMocks()
-  window.localStorage.clear()
+  // Node 25 ships its own `globalThis.localStorage`, and without
+  // `--localstorage-file` it is an object with no methods at all - no
+  // `getItem`, no `clear`. It wins over the one jsdom installs, so this line
+  // threw `window.localStorage.clear is not a function` and took all three
+  // tests down on Node 25 while passing on Node 24. Nothing in the plugin is
+  // involved; `src/internal/storage.ts` only ever calls getItem/setItem.
+  window.localStorage?.clear?.()
 })
 
 // requestAnimationFrame as a manually-pumped queue: count scheduled frames and

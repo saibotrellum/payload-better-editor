@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org).
 
+## [Unreleased]
+### Fixed
+- The resize-drag tests no longer fail on Node 25. Node 25 defines its own `globalThis.localStorage`, and without `--localstorage-file` it is an object carrying no methods at all - it takes precedence over the one jsdom installs, so the `afterEach` cleanup threw `window.localStorage.clear is not a function` and took all three tests in the file down. Nothing in the plugin is involved: `src/internal/storage.ts` only ever calls `getItem`/`setItem`, and no assertion in those tests reads storage. The same file passes on Node 24 and failed on 25.
+
 ## [1.4.1]
 ### Fixed
 - Relative imports in the built package now carry file extensions, so the package loads under Node's native ESM resolver — not just under bundlers. Previously anything on Node's resolver (Vitest, `tsx`/`node` scripts importing a Payload config with the plugin registered) threw `ERR_MODULE_NOT_FOUND` at import time, while bundlers (Next/Turbopack) masked it. ([#29](https://github.com/scorpio-99/payload-better-editor/issues/29))
