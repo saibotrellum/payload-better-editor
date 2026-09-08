@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org).
 
 ## [Unreleased]
+### Added
+- `useBlockSelection` and `BlockSelectionProvider`, exported from `payload-better-editor/client`, let a consumer's own admin components read and drive the block the sidebar edits. Registering the provider in `admin.components.providers` is what makes it reach the toggle: Payload renders slot components as siblings, so a provider wrapped around your own panel sits beside the toggle rather than above it. The hook is inert without the provider, so it is safe to call unconditionally. See "Consumer API: block selection" in DEVELOPERS.md.
+- `defaultOpen` plugin option. With it set, a document opens with the overlay already showing instead of waiting for each user to switch it on. The state is per document rather than remembered: closing the overlay applies to the document at hand, and the next one opens showing it again - the stored toggle preference is deliberately not read to decide the initial state, because a remembered close turns one dismissal into a permanent opt-out. Defaults to `false`, so an install that does not pass it is unchanged. A document whose live-preview URL does not resolve still shows neither toggle nor overlay.
+
+### Changed
+- The overlay's block selection is now lifted above the overlay, so it survives the overlay being closed and reopened - reopening lands on the Blocks tab with the previous block rather than on Page. With the provider registered app level the selection also outlives navigation between documents; DEVELOPERS.md shows how to clear it on document change.
+- `LiveEditorOverlay` accepts optional `selectedBlockPath` / `setSelectedBlockPath` props. Omitting them keeps the previous behaviour, where the overlay owns the selection itself, so a consumer building a custom wrapper around the exported component is unaffected.
+
 ### Fixed
 - The resize-drag tests no longer fail on Node 25. Node 25 defines its own `globalThis.localStorage`, and without `--localstorage-file` it is an object carrying no methods at all - it takes precedence over the one jsdom installs, so the `afterEach` cleanup threw `window.localStorage.clear is not a function` and took all three tests in the file down. Nothing in the plugin is involved: `src/internal/storage.ts` only ever calls `getItem`/`setItem`, and no assertion in those tests reads storage. The same file passes on Node 24 and failed on 25.
 

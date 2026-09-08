@@ -31,6 +31,7 @@ Switch between Desktop, Tablet, Mobile, and Responsive (drag-resizable). The ful
 - **Block actions in the sidebar too** - the same move / duplicate / add-below / delete actions are mirrored in the sidebar's Blocks tab, so power users don't have to reach for the iframe toolbar
 - **Undo and Redo** with `Cmd/Ctrl+Z` and `Cmd/Ctrl+Shift+Z` - snapshot-based, covers every block mutation
 - **Interact mode** toggle so clicks pass through to forms, accordions, links inside the preview
+- **Bring your own navigation** - read and drive the sidebar's block selection from your own admin components with `useBlockSelection`, so an outline tree or jump list can reach a deeply nested block
 - **Loading skeleton** in the iframe and an error boundary so a single bad block can't take the admin down
 - **Click-to-edit** works at arbitrary nesting depth - clicking a deeply nested block walks up to its innermost wrapper
 - **Real Payload fields** in the sidebar via `RenderFields`, so custom field components, validations, and access control all just work

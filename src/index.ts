@@ -49,6 +49,7 @@ type ToggleClientProps = {
   adminPortalSelector?: string
   storageNamespace?: string
   hideToggleLabel?: boolean
+  defaultOpen?: boolean
 }
 
 const withToggleInjected = <T extends CollectionConfig | GlobalConfig>(
@@ -113,6 +114,7 @@ export const betterEditor =
       adminPortalSelector: pluginOptions?.adminPortalSelector,
       storageNamespace: pluginOptions?.storageNamespace,
       hideToggleLabel: pluginOptions?.hideToggleLabel,
+      defaultOpen: pluginOptions?.defaultOpen,
     })
 
     const showBanner = pluginOptions?.showSettingsBanner !== false
