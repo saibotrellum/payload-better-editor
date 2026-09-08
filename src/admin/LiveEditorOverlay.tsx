@@ -15,6 +15,7 @@ import { useOverlayKeyboard } from '../hooks/useOverlayKeyboard.js'
 import { useFocusTrap } from '../hooks/useFocusTrap.js'
 import { OverlayProviders } from '../providers/OverlayProviders.js'
 import { useBetterEditorT } from '../i18n/useBetterEditorT.js'
+import { resolveSelectionState } from './resolveSelectionState.js'
 import '../styles/overlay.css'
 import '../styles/preview.css'
 import '../styles/sidebar.css'
@@ -25,10 +26,18 @@ export type LiveEditorOverlayProps = {
   blocksField: string
   storageNamespace?: string
   adminPortalSelector?: string
-  /** Selection state, owned by the toggle so it survives close/reopen and is
-   *  reachable through `useBlockSelection` from outside the overlay. */
-  selectedBlockPath: string | null
-  setSelectedBlockPath: React.Dispatch<React.SetStateAction<string | null>>
+  /**
+   * Selection state, lifted so it survives the overlay being closed and
+   * reopened and is reachable through `useBlockSelection` from outside.
+   *
+   * Optional: the auto-injected toggle passes both, but a consumer building
+   * its own wrapper around this component (see the export in `client.ts`) may
+   * omit them, and the overlay then owns the selection itself exactly as it
+   * did before this pair existed. Pass both or neither - passing only the
+   * value makes the selection read-only, which nothing wants.
+   */
+  selectedBlockPath?: string | null
+  setSelectedBlockPath?: React.Dispatch<React.SetStateAction<string | null>>
 }
 
 const RESIZE_HANDLE_PX = 6
@@ -41,12 +50,23 @@ export const LiveEditorOverlay: React.FC<LiveEditorOverlayProps> = ({
   blocksField,
   storageNamespace,
   adminPortalSelector,
-  selectedBlockPath,
-  setSelectedBlockPath,
+  selectedBlockPath: selectedBlockPathProp,
+  setSelectedBlockPath: setSelectedBlockPathProp,
 }) => {
-  // The selection lives in the toggle, above this component, so the error
-  // boundary's onReset can still clear it without remounting providers - and
-  // so it survives the overlay being closed and reopened.
+  // Fallback for a consumer that renders this component directly without
+  // lifting the selection. Declared unconditionally (hooks cannot be skipped)
+  // and simply unused when the props arrive.
+  const [ownPath, setOwnPath] = useState<string | null>(null)
+  const { selectedBlockPath, setSelectedBlockPath } = resolveSelectionState(
+    selectedBlockPathProp,
+    setSelectedBlockPathProp,
+    ownPath,
+    setOwnPath,
+  )
+
+  // Lifting the selection above this component keeps the error boundary's
+  // onReset able to clear it without remounting providers, and lets it survive
+  // the overlay being closed and reopened.
   const clearSelection = useCallback(
     () => setSelectedBlockPath(null),
     [setSelectedBlockPath],

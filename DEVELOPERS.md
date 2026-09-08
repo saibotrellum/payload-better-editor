@@ -198,6 +198,68 @@ The overlay and the in-iframe hover toolbar expose two z-index custom properties
 | `showHoverToolbar` | `boolean` | `true` | Show the floating action toolbar on hovered blocks |
 | `hoverToolbarPosition` | `'top-right' \| 'top-left' \| 'bottom-right' \| 'bottom-left'` | `'top-right'` | Toolbar anchor corner |
 
+## Consumer API: block selection
+The overlay's sidebar edits one block at a time. `useBlockSelection` lets your own
+admin components read which block that is, and select a different one - enough to
+build an outline tree, a jump list, or a validation panel that focuses the offending
+block.
+
+### Setup
+Register the provider at app level, not around your own component:
+
+```ts
+admin: {
+  components: {
+    providers: ['payload-better-editor/client#BlockSelectionProvider'],
+  },
+}
+```
+
+Then regenerate the import map (see "Regenerate the import map" above) - a new
+component path is invisible to Payload until you do, and the failure mode is a
+missing component rather than an error naming the cause.
+
+**App level is not a preference.** Payload renders slot components as siblings, so
+a provider you wrap around your own panel sits beside the toggle, not above it, and
+the two get separate selections that never meet.
+
+### Use
+```tsx
+'use client'
+import { useBlockSelection } from 'payload-better-editor/client'
+
+export const MyOutline = () => {
+  const { selectedBlockPath, setSelectedBlockPath } = useBlockSelection()
+  return (
+    <button onClick={() => setSelectedBlockPath('layout.2')}>
+      {selectedBlockPath === 'layout.2' ? 'selected' : 'select second block'}
+    </button>
+  )
+}
+```
+
+The hook is inert without the provider - it returns `null` and a no-op setter - so
+it is safe to call unconditionally.
+
+### The path format
+A form-state path, the same one Payload's form context uses:
+`layout.2.columns.0.content.1`. The first segment is your `blocksField`; the rest
+walks arrays by index. A path the current document has no block for selects
+nothing; see "Sidebar tab is empty when a block should be selected" below for how
+the sidebar resolves one.
+
+### Two things that persist
+The selection outlives the overlay being closed and reopened, so reopening lands on
+the Blocks tab with the previous block rather than on Page. Registered app level, it
+also outlives navigation from one document to another - and `layout.2` means a
+different block in a different document. Clear it yourself on document change if
+that matters to you:
+
+```tsx
+const { id } = useDocumentInfo()
+useEffect(() => setSelectedBlockPath(null), [id, setSelectedBlockPath])
+```
+
 ## Module layout
 The plugin source lives under `src/` with the following top-level split:
 
@@ -207,7 +269,7 @@ The plugin source lives under `src/` with the following top-level split:
 | `preview/` | Iframe-side bridge — installed into the consumer's preview document. Click-to-focus, hover styles, the hover toolbar controller, and the parent-postMessage protocol. |
 | `hooks/` | React hooks shared between admin components (resize, viewport state, focus trap, preview binding/sync, block actions, …). |
 | `state/` | Long-lived state contexts: settings (`BetterEditorSettings`) and undo/redo history. |
-| `providers/` | Top-level overlay provider tree, including the runtime config context (storage namespace, labels). |
+| `providers/` | The overlay provider tree (runtime config, storage namespace, labels), plus `BlockSelectionProvider`, which is deliberately not overlay-scoped. |
 | `internal/` | Private utilities: storage, postMessage, path helpers, DOM constants. Not part of the public API. |
 | `styles/` | Plain CSS, opted in via `import` side-effects. |
 | `index.ts` / `client.ts` | Public entry points (server plugin factory + client UI). |

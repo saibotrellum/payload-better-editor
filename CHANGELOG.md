@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org).
 
+## [Unreleased]
+### Added
+- `useBlockSelection` and `BlockSelectionProvider`, exported from `payload-better-editor/client`, let a consumer's own admin components read and drive the block the sidebar edits. Registering the provider in `admin.components.providers` is what makes it reach the toggle: Payload renders slot components as siblings, so a provider wrapped around your own panel sits beside the toggle rather than above it. The hook is inert without the provider, so it is safe to call unconditionally. See "Consumer API: block selection" in DEVELOPERS.md.
+
+### Changed
+- The overlay's block selection is now lifted above the overlay, so it survives the overlay being closed and reopened - reopening lands on the Blocks tab with the previous block rather than on Page. With the provider registered app level the selection also outlives navigation between documents; DEVELOPERS.md shows how to clear it on document change.
+- `LiveEditorOverlay` accepts optional `selectedBlockPath` / `setSelectedBlockPath` props. Omitting them keeps the previous behaviour, where the overlay owns the selection itself, so a consumer building a custom wrapper around the exported component is unaffected.
+
 ## [1.4.1]
 ### Fixed
 - Relative imports in the built package now carry file extensions, so the package loads under Node's native ESM resolver — not just under bundlers. Previously anything on Node's resolver (Vitest, `tsx`/`node` scripts importing a Payload config with the plugin registered) threw `ERR_MODULE_NOT_FOUND` at import time, while bundlers (Next/Turbopack) masked it. ([#29](https://github.com/scorpio-99/payload-better-editor/issues/29))
