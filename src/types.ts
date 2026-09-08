@@ -54,4 +54,16 @@ export type BetterEditorConfig = {
    * is kept either way. Defaults to `false` (label shown).
    */
   hideToggleLabel?: boolean
+  /**
+   * Open the side-by-side editor as soon as a document is opened, instead of
+   * waiting for the editor to switch it on.
+   *
+   * The state is per document, not remembered: closing the overlay applies to
+   * the document at hand, and the next one opens with it showing again. That
+   * is deliberate - a remembered close would turn one dismissal into a
+   * permanent opt-out, which is what this option exists to replace.
+   *
+   * Defaults to `false`, so an existing install behaves exactly as before.
+   */
+  defaultOpen?: boolean
 }

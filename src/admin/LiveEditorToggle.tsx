@@ -6,6 +6,7 @@ import { useDocumentInfo, useLivePreviewContext, usePreferences } from '@payload
 import { LiveEditorOverlay } from './LiveEditorOverlay.js'
 import { useMainWrapperPortal } from '../hooks/useMainWrapperPortal.js'
 import { buildStorageKeys } from '../internal/storage-keys.js'
+import { resolveInitialOpen } from './resolveInitialOpen.js'
 import { LayoutIcon } from './icons.js'
 import { useBetterEditorT } from '../i18n/useBetterEditorT.js'
 import {
@@ -21,6 +22,8 @@ export type LiveEditorToggleProps = {
   adminPortalSelector?: string
   storageNamespace?: string
   hideToggleLabel?: boolean
+  /** Open the overlay on arrival at every document. See `defaultOpen` in types.ts. */
+  defaultOpen?: boolean
 }
 
 /**
@@ -43,9 +46,13 @@ const LiveEditorToggleInner: React.FC<LiveEditorToggleProps> = ({
   adminPortalSelector,
   storageNamespace,
   hideToggleLabel,
+  defaultOpen,
 }) => {
   const { selectedBlockPath, setSelectedBlockPath } = useBlockSelection()
-  const [open, setOpen] = useState(false)
+  // Starts from the configured default rather than a hardcoded `false`, so the
+  // first paint of a `defaultOpen` install already shows the overlay instead of
+  // flashing the closed state until the preference read resolves.
+  const [open, setOpen] = useState(() => resolveInitialOpen(undefined, defaultOpen))
   const { collectionSlug, globalSlug } = useDocumentInfo()
   const { previewURL } = useLivePreviewContext()
   const { getPreference, setPreference } = usePreferences()
@@ -63,12 +70,15 @@ const LiveEditorToggleInner: React.FC<LiveEditorToggleProps> = ({
     void getPreference<Pref>(prefKey).then((pref) => {
       if (cancelled) return
       hydratedKeyRef.current = prefKey
-      setOpen(Boolean(pref?.open))
+      // `resolveInitialOpen` ignores the stored value when `defaultOpen` is
+      // set: the overlay is a per-document state there, so a close on one
+      // document must not follow the editor to the next.
+      setOpen(resolveInitialOpen(pref, defaultOpen))
     })
     return () => {
       cancelled = true
     }
-  }, [prefKey, getPreference])
+  }, [prefKey, getPreference, defaultOpen])
 
   useEffect(() => {
     if (hydratedKeyRef.current !== prefKey) return
