@@ -20,6 +20,7 @@ concurrency:
 
 permissions:
   contents: write
+  id-token: write
 
 jobs:
   release:
@@ -33,6 +34,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          registry-url: 'https://registry.npmjs.org'
       - run: pnpm install --frozen-lockfile=false
 
       # The gate. Same three checks CI runs, repeated here so this job is
@@ -43,16 +45,13 @@ jobs:
       - run: pnpm clean && pnpm build
 
       - name: Publish to npm
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           CURRENT_VER=$(node -p "require('./package.json').version")
           if npm view @saibotrellum/payload-better-editor@$CURRENT_VER version >/dev/null 2>&1; then
             echo "Version $CURRENT_VER already published to npm, skipping."
           else
-            echo "Publishing @saibotrellum/payload-better-editor@$CURRENT_VER to npm..."
-            pnpm config set "//registry.npmjs.org/:_authToken" "$NPM_TOKEN"
-            pnpm publish --access public --no-git-checks
+            echo "Publishing @saibotrellum/payload-better-editor@$CURRENT_VER via Trusted Publishing..."
+            npm publish --access public --provenance
           fi
 
       - name: Pack
