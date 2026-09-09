@@ -18,6 +18,7 @@ export { VERSION } from './version.js'
 
 const DEFAULT_BLOCKS_FIELD = 'layout'
 const TOGGLE_COMPONENT_PATH = 'payload-better-editor/client#LiveEditorToggle'
+const DATA_CHANNEL_COMPONENT_PATH = 'payload-better-editor/client#LivePreviewDataChannel'
 const isDev = process.env.NODE_ENV !== 'production'
 
 /**
@@ -78,6 +79,40 @@ const withToggleInjected = <T extends CollectionConfig | GlobalConfig>(
   }
 }
 
+/**
+ * Fill `admin.components.views.edit.livePreview` with the data channel.
+ *
+ * Payload's DefaultEditView renders this slot INSTEAD of its own
+ * `LivePreviewWindow` (`CustomLivePreview || <LivePreviewWindow/>`), which is what
+ * this needs to achieve two things at once: the channel gets a mounting point, and
+ * Payload stops rendering a second iframe against the ref the overlay shares with it.
+ *
+ * An entity that already declares a component here keeps it - a host that went to the
+ * trouble of writing its own live-preview view means it.
+ */
+const withDataChannelInjected = <T extends CollectionConfig | GlobalConfig>(entity: T): T => {
+  const admin = { ...(entity.admin ?? {}) } as NonNullable<T['admin']>
+  const components = { ...(admin.components ?? {}) } as Record<string, unknown>
+  const views = { ...((components.views as Record<string, unknown>) ?? {}) }
+  const edit = { ...((views.edit as Record<string, unknown>) ?? {}) }
+
+  if (edit.livePreview) return entity
+
+  return {
+    ...entity,
+    admin: {
+      ...admin,
+      components: {
+        ...components,
+        views: {
+          ...views,
+          edit: { ...edit, livePreview: { Component: DATA_CHANNEL_COMPONENT_PATH } },
+        },
+      },
+    },
+  }
+}
+
 const warnMissingBlocksField = (kind: 'collection' | 'global', slug: string, blocksField: string) => {
 
   console.warn(
@@ -108,6 +143,7 @@ export const betterEditor =
     const defaultBlocksField = pluginOptions?.blocksField || DEFAULT_BLOCKS_FIELD
     const collectionMap = normalizeEntities(pluginOptions?.collections, defaultBlocksField)
     const globalMap = normalizeEntities(pluginOptions?.globals, defaultBlocksField)
+    const injectDataChannel = pluginOptions?.livePreviewData !== false
     const toggleClientProps = (blocksField: string): ToggleClientProps => ({
       blocksField,
       adminPortalSelector: pluginOptions?.adminPortalSelector,
@@ -168,7 +204,8 @@ export const betterEditor =
         if (isDev && !hasBlocksField(collection.fields, blocksField)) {
           warnMissingBlocksField('collection', collection.slug, blocksField)
         }
-        return withToggleInjected(collection, 'edit', toggleClientProps(blocksField))
+        const withToggle = withToggleInjected(collection, 'edit', toggleClientProps(blocksField))
+        return injectDataChannel ? withDataChannelInjected(withToggle) : withToggle
       })
     }
 
@@ -179,7 +216,8 @@ export const betterEditor =
         if (isDev && !hasBlocksField(global.fields, blocksField)) {
           warnMissingBlocksField('global', global.slug, blocksField)
         }
-        return withToggleInjected(global, 'elements', toggleClientProps(blocksField))
+        const withToggle = withToggleInjected(global, 'elements', toggleClientProps(blocksField))
+        return injectDataChannel ? withDataChannelInjected(withToggle) : withToggle
       })
     }
 

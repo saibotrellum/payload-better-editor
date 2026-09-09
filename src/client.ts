@@ -7,6 +7,14 @@ export { LiveEditorToggle } from './admin/LiveEditorToggle.js'
 export type { LiveEditorToggleProps } from './admin/LiveEditorToggle.js'
 
 /**
+ * Posts unsaved form values into the overlay's preview iframe. Auto-injected by
+ * the plugin factory into `views.edit.livePreview`; consumers usually don't render
+ * it directly. Pass `livePreviewData: false` to the plugin to leave that slot alone.
+ */
+export { LivePreviewDataChannel } from './admin/LivePreviewDataChannel.js'
+export type { LivePreviewDataChannelProps } from './admin/LivePreviewDataChannel.js'
+
+/**
  * The full editor overlay (preview iframe + 3-tab sidebar). Mounted into
  * the Payload admin shell when the toggle opens it. Exported so consumers
  * can build a custom toggle / wrapper if they need to bypass the

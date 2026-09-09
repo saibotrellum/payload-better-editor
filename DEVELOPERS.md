@@ -277,7 +277,19 @@ Block actions change the form state but don't save on their own, and the standar
   ```
 
 - Without autosave, the preview updates each time you save the document.
-- To reflect *unsaved* edits without autosave, render the preview with Payload's `useLivePreview` (live data channel) instead of `RefreshRouteOnSave`.
+- To reflect *unsaved* edits without autosave, render the preview route with Payload's
+  `useLivePreview` instead of `RefreshRouteOnSave`. The plugin supplies the other half:
+  it fills `views.edit.livePreview` with a component that posts the current form values
+  into the overlay's iframe on every change. Nothing to wire on your side.
+
+  That slot matters twice over. Payload's `DefaultEditView` renders it *instead of* its
+  own `LivePreviewWindow`, and that window is both the thing that posts the values and
+  the thing that mounts a second iframe against the shared ref. Leave the slot empty and
+  the whole channel is delivered to that second, invisible iframe - which is what "live
+  preview does nothing" looks like from the outside, with no error anywhere.
+
+  Pass `livePreviewData: false` if you would rather keep Payload's own live-preview view
+  alongside the overlay. The preview then updates on save only.
 
 ### Multiple plugins are fighting over the document toggle
 

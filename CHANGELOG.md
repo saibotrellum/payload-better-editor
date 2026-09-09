@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org).
 
+## [Unreleased]
+### Added
+- The preview now reflects edits that have not been saved yet. Payload posts the current form values into its live-preview iframe on every change, but the overlay replaces the window that does the posting, so that channel went to an iframe nobody sees - measured in a real admin session, the overlay's iframe received nothing while Payload's hidden one received the lot. The plugin now fills `views.edit.livePreview` itself, which both supplies the sender and stops the second iframe from being mounted. Requires the preview route to run Payload's `useLivePreview`; with `RefreshRouteOnSave` the preview keeps updating on save as before. Set `livePreviewData: false` to leave the slot to Payload.
+
 ## [1.4.1]
 ### Fixed
 - Relative imports in the built package now carry file extensions, so the package loads under Node's native ESM resolver — not just under bundlers. Previously anything on Node's resolver (Vitest, `tsx`/`node` scripts importing a Payload config with the plugin registered) threw `ERR_MODULE_NOT_FOUND` at import time, while bundlers (Next/Turbopack) masked it. ([#29](https://github.com/scorpio-99/payload-better-editor/issues/29))
