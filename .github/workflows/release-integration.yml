@@ -35,6 +35,15 @@ jobs:
         with:
           node-version: 22
           registry-url: 'https://registry.npmjs.org'
+
+      # Trusted publishing needs npm >= 11.5.1; Node 22 still ships npm 10.9.8,
+      # which knows nothing about OIDC. It falls back to a plain token PUT, and
+      # the registry answers `404 Not Found - PUT .../@saibotrellum%2f...` - a
+      # permissions error wearing a "package does not exist" costume, on a
+      # package that plainly does exist. The provenance statement is signed and
+      # logged before that point, which makes the run look even more like it
+      # should have worked.
+      - run: npm install -g npm@latest
       - run: pnpm install --frozen-lockfile=false
 
       # The gate. Same three checks CI runs, repeated here so this job is
