@@ -6,7 +6,7 @@
   "author": "scorpio-99",
   "repository": {
     "type": "git",
-    "url": "https://github.com/scorpio-99/payload-better-editor"
+    "url": "git+https://github.com/saibotrellum/payload-better-editor.git"
   },
   "homepage": "https://github.com/scorpio-99/payload-better-editor#readme",
   "bugs": {
