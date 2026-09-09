@@ -66,4 +66,16 @@ export type BetterEditorConfig = {
    * Defaults to `false`, so an existing install behaves exactly as before.
    */
   defaultOpen?: boolean
+  /**
+   * Post unsaved form values into the preview iframe, so the preview reflects an
+   * edit before it is saved. Requires the preview route to run Payload's
+   * `useLivePreview`; with `RefreshRouteOnSave` instead, the preview keeps updating
+   * on save and this changes nothing. Defaults to `true`.
+   *
+   * Setting it to `false` leaves `views.edit.livePreview` untouched, so Payload
+   * renders its own `LivePreviewWindow` again - a second iframe, and the preview
+   * then updates only on save. Turn it off if you want Payload's live-preview view
+   * alongside the overlay.
+   */
+  livePreviewData?: boolean
 }

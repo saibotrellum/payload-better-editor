@@ -101,7 +101,7 @@ const LiveEditorOverlayInner: React.FC<InnerProps> = ({
   const t = useBetterEditorT()
   const settings = useBetterEditorSettings()
   const history = useEditorHistory()
-  const { previewURL } = useLivePreviewContext()
+  const { iframeRef: livePreviewIframeRef, previewURL } = useLivePreviewContext()
 
   const { sidebarWidth, isResizing, onResizeStart, onResizeKeyDown } = useSidebarResize(
     settings.sidebarPosition,
@@ -112,8 +112,32 @@ const LiveEditorOverlayInner: React.FC<InnerProps> = ({
     setResponsiveWidth,
     viewportWidth,
   } = useViewportState(settings)
-  // Shared with the toolbar's width chip, which measures the iframe directly.
-  const iframeRef = useRef<HTMLIFrameElement | null>(null)
+  /**
+   * The preview iframe, shared with the toolbar's width chip (which measures it
+   * directly) and with the selection sync.
+   *
+   * Payload's `LivePreviewProvider` owns a ref of its own and posts BOTH live-preview
+   * messages through it: `payload-live-preview`, carrying the current form values on
+   * every keystroke, and `payload-document-event` on save. Its `LivePreviewWindow`
+   * renders a second iframe against that same ref.
+   *
+   * Taking a local `useRef` here left this overlay's iframe unknown to that provider,
+   * so the whole data channel was delivered to Payload's own hidden iframe instead.
+   * Measured in a real admin session: the message log of `#live-preview-iframe` held
+   * two `payload-live-preview` entries after a single field edit, while
+   * `.better-editor-frame` held none. Nothing errored - the preview simply never
+   * heard about an unsaved edit, which reads as "live preview does not work".
+   *
+   * Using the context ref makes this overlay's iframe the one everything else can
+   * find. `LivePreviewDataChannel` reads the same ref to post form values into it,
+   * and taking the slot that renders that component is also what stops Payload from
+   * mounting a second iframe against this ref - the two changes only work together.
+   *
+   * Falls back to a local ref when the overlay renders outside a LivePreviewProvider,
+   * where the context returns its default and the ref is not shared with anyone.
+   */
+  const localIframeRef = useRef<HTMLIFrameElement | null>(null)
+  const iframeRef = livePreviewIframeRef ?? localIframeRef
 
   const [isFullscreen, setIsFullscreen] = useState(false)
   const toggleFullscreen = useCallback(() => setIsFullscreen((v) => !v), [])
