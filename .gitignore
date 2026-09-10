@@ -12,3 +12,6 @@
 .idea/*
 !/.idea/runConfigurations
 .vscode/*
+
+# Hand-built test tarballs (pnpm pack)
+*.tgz

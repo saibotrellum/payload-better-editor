@@ -78,6 +78,7 @@ export const LiveEditorOverlay: React.FC<LiveEditorOverlayProps> = ({
       onReset={clearSelection}
       storageNamespace={storageNamespace}
       adminPortalSelector={adminPortalSelector}
+      blocksField={blocksField}
     >
       <LiveEditorOverlayInner
         blocksField={blocksField}
