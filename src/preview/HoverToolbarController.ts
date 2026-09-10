@@ -33,6 +33,11 @@ export const toHoverToolbarLabels = (
 const FALLBACK_TB_WIDTH = 120
 const FALLBACK_TB_HEIGHT = 32
 
+export type SelectOptions = {
+  scrollIntoView?: boolean
+  smooth?: boolean
+}
+
 export class HoverToolbarController {
   private readonly doc: Document
   private opts: HoverToolbarOptions
@@ -44,6 +49,8 @@ export class HoverToolbarController {
   private activeChain: HTMLElement[] = []
   private positionRaf = 0
   private observerRaf = 0
+  private pendingScrollBlockId: string | null = null
+  private pendingScrollUntil = 0
   private readonly onScroll: () => void
   private readonly observer: MutationObserver
 
@@ -78,7 +85,9 @@ export class HoverToolbarController {
     this.observerRaf = view.requestAnimationFrame(() => {
       this.observerRaf = 0
       if (this.destroyed || !this.currentBlockId) return
-      this.select(this.currentBlockId)
+      const shouldScroll =
+        this.pendingScrollBlockId === this.currentBlockId && Date.now() <= this.pendingScrollUntil
+      this.select(this.currentBlockId, { scrollIntoView: shouldScroll })
     })
   }
 
@@ -93,19 +102,31 @@ export class HoverToolbarController {
       React.createElement(HoverToolbar, {
         labels: this.opts.labels,
         onAction: (action) => {
-          if (this.currentBlockId) this.opts.onAction(this.currentBlockId, action)
+          if (this.currentBlockId) {
+            if (action === 'move-up' || action === 'move-down') {
+              this.pendingScrollBlockId = this.currentBlockId
+              this.pendingScrollUntil = Date.now() + 800
+            }
+            this.opts.onAction(this.currentBlockId, action)
+          }
         },
       }),
     )
   }
 
-  select(id: string): void {
+  select(id: string, opts?: SelectOptions): void {
     if (this.destroyed) return
+
+    const forceScroll = Boolean(opts?.scrollIntoView)
+    if (forceScroll) {
+      this.pendingScrollBlockId = id
+      this.pendingScrollUntil = Date.now() + 800
+    }
+
     const escaped = typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(id) : id.replace(/["\\]/g, '\\$&')
-    const el = this.doc.querySelector<HTMLElement>(`[${BLOCK_ID_ATTR}="${escaped}"]`)
+    const el = this.doc.querySelector<HTMLElement>(`[${BLOCK_ID_ATTR}="${escaped}"]:not([data-preview-removed])`)
     if (!el) {
-      // Block not in DOM (yet) — keep id but hide the toolbar; a later
-      // select(id) call after the iframe re-render will resolve it.
+      // Block nicht im DOM (noch nicht) — ID merken, Toolbar ausblenden
       this.currentBlockId = id
       this.currentBlockEl = null
       this.clearActive()
@@ -119,11 +140,27 @@ export class HoverToolbarController {
     this.toolbar.dataset.nested = isNested ? '1' : '0'
     this.toolbar.classList.add('is-visible')
     this.scheduleReposition()
+
+    const isPendingScroll =
+      this.pendingScrollBlockId === id && Date.now() <= this.pendingScrollUntil
+    this.scrollToElement(el, opts?.smooth !== false, forceScroll || isPendingScroll)
+
+    // DOM-Fokus setzen ohne unkontrolliertes Scrollen
+    if (!el.hasAttribute('tabindex')) {
+      el.setAttribute('tabindex', '-1')
+    }
+    try {
+      el.focus({ preventScroll: true })
+    } catch {
+      // Ignoriert
+    }
   }
 
   deselect(): void {
     if (this.destroyed) return
     if (!this.currentBlockId) return
+    this.pendingScrollBlockId = null
+    this.pendingScrollUntil = 0
     this.clearActive()
     this.currentBlockId = null
     this.currentBlockEl = null
@@ -133,6 +170,8 @@ export class HoverToolbarController {
   destroy(): void {
     if (this.destroyed) return
     this.destroyed = true
+    this.pendingScrollBlockId = null
+    this.pendingScrollUntil = 0
     this.observer.disconnect()
     const view = this.doc.defaultView
     view?.removeEventListener('scroll', this.onScroll, true)
@@ -185,6 +224,34 @@ export class HoverToolbarController {
     style.top = `${top}px`
     style.left = `${left}px`
     style.right = 'auto'
+  }
+
+  private scrollToElement(el: HTMLElement, smooth = true, forceCenter = false): void {
+    const view = this.doc.defaultView
+    if (!view) return
+
+    const rect = el.getBoundingClientRect()
+    const viewportHeight = view.innerHeight || this.doc.documentElement.clientHeight
+
+    if (!forceCenter) {
+      const isComfortablyVisible = rect.top >= 40 && rect.bottom <= viewportHeight - 20
+      if (isComfortablyVisible) return
+    }
+
+    const absTop = view.scrollY + rect.top
+
+    // Große Blöcke oben ausrichten (Platz für Toolbar), kleinere vertikal zentrieren.
+    let targetY: number
+    if (rect.height > viewportHeight - 80) {
+      targetY = Math.max(0, absTop - 40)
+    } else {
+      targetY = Math.max(0, absTop - (viewportHeight - rect.height) / 2)
+    }
+
+    view.scrollTo({
+      top: targetY,
+      behavior: smooth ? 'smooth' : 'auto',
+    })
   }
 
   // Only clears the chain we marked, avoiding a full-document scan.

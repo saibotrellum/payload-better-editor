@@ -69,20 +69,69 @@ export const IsolatedDraftProvider: React.FC<IsolatedDraftProviderProps> = ({
       const frame = iframeRef?.current
       if (!frame || !url) return
 
+      const win = frame.contentWindow
+      if (!win) return
+
+      // A fresh iframe shows `about:blank` until `src` has navigated, and that
+      // document inherits the ADMIN's origin. Posting with the preview origin as
+      // the target then throws:
+      //
+      //   The target origin ('http://tenant.localhost:5300') does not match the
+      //   recipient window's origin ('http://admin.localhost:5300')
+      //
+      // Same-origin setups never see it, because both origins are equal. It
+      // shows up on a multi-domain admin, where the preview is served from the
+      // tenant host. `usePreviewBinding` already guards the same `about:blank`
+      // window; this is the posting half of it.
+      //
+      // Measured on a multi-domain admin, the iframe passes through two states
+      // before it is ready, and BOTH would throw:
+      //
+      //   hasDoc=true   doc.URL='about:blank'   -> inherited admin origin
+      //   hasDoc=false  contentWindow.origin throws
+      //
+      // The second one is not proof of having reached the target origin - an
+      // about:blank that has begun navigating reports the same way. So neither
+      // document nor window is a reliable witness here.
+      //
+      // `src` cannot tell them apart either - it already names the target in
+      // both. What distinguishes them is whether the window's own origin
+      // matches the target we are about to post to. Reading that origin throws
+      // exactly when it does NOT match, so the two cases collapse into one
+      // check with a single meaning: post only when we can read the window and
+      // its origin equals the target.
+      let ready = false
+      try {
+        const target = new URL(url, window.location.origin).origin
+        ready = win.location.origin === target
+      } catch {
+        // Cross-origin read - the iframe has navigated to the tenant and the
+        // admin cannot inspect it. That is the normal, healthy state on a
+        // multi-domain admin, and posting is correct there.
+        ready = true
+      }
+      if (!ready) return
+
       const values = formState ? reduceFieldsToValues(formState, true) : {}
       if (!values.id) values.id = id
       values[blocksField] = targetBlocks
 
-      frame.contentWindow?.postMessage(
-        {
-          type: 'payload-live-preview',
-          collectionSlug,
-          data: values,
-          globalSlug,
-          locale: locale?.code,
-        },
-        url,
-      )
+      try {
+        win.postMessage(
+          {
+            type: 'payload-live-preview',
+            collectionSlug,
+            data: values,
+            globalSlug,
+            locale: locale?.code,
+          },
+          url,
+        )
+      } catch {
+        // The iframe can navigate between the check above and this call. A
+        // dropped frame of preview data is not worth an uncaught error in the
+        // admin console - the next form change posts again.
+      }
     },
     [iframeRef, url, formState, id, blocksField, collectionSlug, globalSlug, locale],
   )
@@ -99,101 +148,106 @@ export const IsolatedDraftProvider: React.FC<IsolatedDraftProviderProps> = ({
     }
   }, [formState, blocksField])
 
+  const lastPostedValuesRef = useRef<string>('')
+
   // Sync field changes from formState into current blocks without changing block order
   useEffect(() => {
     if (!initializedRef.current || !formState) return
 
     const values = reduceFieldsToValues(formState, true)
     const formBlocks = values[blocksField]
-    if (!Array.isArray(formBlocks)) return
 
     // Map latest field values from formState by block id
     const formBlockMap = new Map<string, Record<string, any>>()
-    for (const b of formBlocks) {
-      if (b && b.id) formBlockMap.set(String(b.id), b)
+    if (Array.isArray(formBlocks)) {
+      for (const b of formBlocks) {
+        if (b && b.id) formBlockMap.set(String(b.id), b)
+      }
     }
 
     const currentBlocks = blocksRef.current
-    let hasFieldChange = false
+    let hasBlockFieldChange = false
     const updated = currentBlocks.map((existing) => {
       const live = formBlockMap.get(String(existing.id))
       if (live && JSON.stringify(live) !== JSON.stringify(existing)) {
-        hasFieldChange = true
+        hasBlockFieldChange = true
         return { ...existing, ...live }
       }
       return existing
     })
 
-    if (hasFieldChange) {
+    const valuesString = JSON.stringify(values)
+    if (hasBlockFieldChange) {
       setBlocks(updated)
+      lastPostedValuesRef.current = valuesString
       postToIframe(updated)
+    } else if (valuesString !== lastPostedValuesRef.current) {
+      lastPostedValuesRef.current = valuesString
+      postToIframe(currentBlocks)
     }
   }, [formState, blocksField, postToIframe])
 
   const moveBlock = useCallback(
     (fromIndex: number, toIndex: number) => {
-      setBlocks((prev) => {
-        if (fromIndex < 0 || fromIndex >= prev.length || toIndex < 0 || toIndex >= prev.length) {
-          return prev
-        }
-        const next = [...prev]
-        const [moved] = next.splice(fromIndex, 1)
-        next.splice(toIndex, 0, moved)
-        setIsDirty(true)
-        postToIframe(next)
-        return next
-      })
+      const prev = blocksRef.current
+      if (fromIndex < 0 || fromIndex >= prev.length || toIndex < 0 || toIndex >= prev.length) {
+        return
+      }
+      const next = [...prev]
+      const [moved] = next.splice(fromIndex, 1)
+      next.splice(toIndex, 0, moved)
+      setBlocks(next)
+      setIsDirty(true)
+      postToIframe(next)
     },
     [postToIframe],
   )
 
   const duplicateBlock = useCallback(
     (index: number) => {
-      setBlocks((prev) => {
-        if (index < 0 || index >= prev.length) return prev
-        const target = prev[index]
-        const duplicated = {
-          ...JSON.parse(JSON.stringify(target)),
-          id: generateRowId(),
-        }
-        const next = [...prev]
-        next.splice(index + 1, 0, duplicated)
-        setIsDirty(true)
-        postToIframe(next)
-        return next
-      })
+      const prev = blocksRef.current
+      if (index < 0 || index >= prev.length) return
+      const target = prev[index]
+      const duplicated = {
+        ...JSON.parse(JSON.stringify(target)),
+        id: generateRowId(),
+      }
+      delete (duplicated as any)._id
+      const next = [...prev]
+      next.splice(index + 1, 0, duplicated)
+      setBlocks(next)
+      setIsDirty(true)
+      postToIframe(next)
     },
     [postToIframe],
   )
 
   const removeBlock = useCallback(
     (index: number) => {
-      setBlocks((prev) => {
-        if (index < 0 || index >= prev.length) return prev
-        const next = [...prev]
-        next.splice(index, 1)
-        setIsDirty(true)
-        postToIframe(next)
-        return next
-      })
+      const prev = blocksRef.current
+      if (index < 0 || index >= prev.length) return
+      const next = [...prev]
+      next.splice(index, 1)
+      setBlocks(next)
+      setIsDirty(true)
+      postToIframe(next)
     },
     [postToIframe],
   )
 
   const addBlock = useCallback(
     (index: number, blockType: string) => {
-      setBlocks((prev) => {
-        const newBlock = {
-          id: generateRowId(),
-          blockType,
-        }
-        const next = [...prev]
-        const insertAt = index >= 0 && index <= prev.length ? index : prev.length
-        next.splice(insertAt, 0, newBlock)
-        setIsDirty(true)
-        postToIframe(next)
-        return next
-      })
+      const prev = blocksRef.current
+      const newBlock = {
+        id: generateRowId(),
+        blockType,
+      }
+      const next = [...prev]
+      const insertAt = index >= 0 && index <= prev.length ? index : prev.length
+      next.splice(insertAt, 0, newBlock)
+      setBlocks(next)
+      setIsDirty(true)
+      postToIframe(next)
     },
     [postToIframe],
   )

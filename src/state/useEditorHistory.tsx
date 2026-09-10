@@ -110,10 +110,9 @@ export const EditorHistoryProvider: React.FC<{ children: React.ReactNode }> = ({
     (mutation: () => void) => {
       pushSnapshot()
       mutation()
-      setModified(true)
       bumpMutationToken()
     },
-    [pushSnapshot, setModified, bumpMutationToken],
+    [pushSnapshot, bumpMutationToken],
   )
 
   const restore = useCallback(

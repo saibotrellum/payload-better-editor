@@ -62,7 +62,7 @@ export const useBlockActionMessages = ({
 
         // Check if data.id is in draft.blocks
         let rowIndex = currentDraft.blocks.findIndex(
-          (b) => b.id === data.id || b._id === data.id,
+          (b) => String(b.id || b._id) === String(data.id),
         )
         let parentPath = 'layout'
 

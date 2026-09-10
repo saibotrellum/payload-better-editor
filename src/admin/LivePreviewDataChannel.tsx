@@ -42,55 +42,9 @@ export type LivePreviewDataChannelProps = {
  * `payload-document-event` on save stays with the overlay's own selection sync, which
  * already posts it. This component is only the unsaved-edit half.
  */
-export const LivePreviewDataChannel: React.FC<LivePreviewDataChannelProps> = ({
-  collectionSlug: collectionSlugProp,
-  globalSlug: globalSlugProp,
-}) => {
-  const { iframeRef, url } = useLivePreviewContext()
-  const [formState] = useAllFormFields()
-  const docInfo = useDocumentInfo()
-  const { id } = docInfo
-  const locale = useLocale()
-
-  // The slugs come from context, not from props, and that is deliberate.
-  //
-  // Payload renders a document-view slot as an already-built element - the Edit
-  // view does `CustomLivePreview || <LivePreviewWindow collectionSlug={...} />` -
-  // so a `clientProps` entry on `views.edit.livePreview` never reaches this
-  // component. Measured after shipping exactly that: the registration carried the
-  // slug, `dist` carried the registration, and every posted message still had
-  // `collectionSlug: null`.
-  //
-  // `useDocumentInfo()` does resolve here - the `id` above comes from it and has
-  // always been populated - and it carries both slugs. Props stay accepted so a
-  // consumer mounting this component by hand can still say which document it is
-  // for, but nothing has to pass them.
-  const collectionSlug = collectionSlugProp ?? docInfo.collectionSlug
-  const globalSlug = globalSlugProp ?? docInfo.globalSlug
-
-  useEffect(() => {
-    // No iframe means the overlay is closed - there is nothing to talk to. This
-    // stands in for Payload's `isLivePreviewing`, which tracks ITS toggle, not ours.
-    const frame = iframeRef?.current
-    if (!frame || !formState || !url) return
-
-    const values = reduceFieldsToValues(formState, true)
-    if (!values.id) values.id = id
-
-    // Targeted at `url`, never '*': the message carries the whole document, including
-    // unpublished fields, and a wildcard would hand it to any origin that framed us.
-    frame.contentWindow?.postMessage(
-      {
-        type: 'payload-live-preview',
-        collectionSlug,
-        data: values,
-        globalSlug,
-        locale: locale?.code,
-      },
-      url,
-    )
-  }, [formState, iframeRef, url, id, collectionSlug, globalSlug, locale])
-
+export const LivePreviewDataChannel: React.FC<LivePreviewDataChannelProps> = () => {
+  // Besetzt den Payload-LivePreview-Slot, um ein doppeltes Iframe zu verhindern.
+  // Sendet keine Daten, da useIsolatedDraft den Preview-Kanal isoliert verwaltet.
   return null
 }
 
