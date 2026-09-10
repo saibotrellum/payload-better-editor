@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org).
 
+## [1.4.3]
+### Fixed
+- Live preview reflects unsaved edits again. The data channel was registered as `livePreview: { Component: path }`, which mounts the component but passes it no props - so `LivePreviewDataChannel` read an undefined `collectionSlug` and posted every message without one. `@payloadcms/live-preview` drops those on `if (!collectionSlug && !globalSlug) return initialData`, so `useLivePreview` returned its initial data forever and never emitted an update. Nothing threw: measured in a host app, six well-formed messages reached the preview iframe on the same origin and every one was discarded on that line, which looks exactly like live preview not being configured at all. The slot now carries `clientProps` with the entity's own slug. Affects both collections and globals, and every consumer of 1.4.2 - the channel shipped in that release and has never delivered an update.
+
 ## [1.4.2]
 ### Added
 - `useBlockSelection` and `BlockSelectionProvider`, exported from `payload-better-editor/client`, let a consumer's own admin components read and drive the block the sidebar edits. Registering the provider in `admin.components.providers` is what makes it reach the toggle: Payload renders slot components as siblings, so a provider wrapped around your own panel sits beside the toggle rather than above it. The hook is inert without the provider, so it is safe to call unconditionally. See "Consumer API: block selection" in DEVELOPERS.md.
