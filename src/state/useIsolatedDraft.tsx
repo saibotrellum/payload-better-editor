@@ -60,6 +60,14 @@ export type IsolatedDraftProviderProps = {
   children: React.ReactNode
 }
 
+const stripSystemFields = (v: Record<string, unknown>): Record<string, unknown> => {
+  const next = { ...v }
+  delete next.updatedAt
+  delete next.createdAt
+  delete next._status
+  return next
+}
+
 export const IsolatedDraftProvider: React.FC<IsolatedDraftProviderProps> = ({
   blocksField,
   children,
@@ -78,6 +86,7 @@ export const IsolatedDraftProvider: React.FC<IsolatedDraftProviderProps> = ({
   const [isDirty, setIsDirty] = useState<boolean>(false)
   const [isSaving, setIsSaving] = useState<boolean>(false)
   const initializedRef = useRef<boolean>(false)
+  const justSavedRef = useRef<boolean>(false)
   const blocksRef = useRef<DraftBlock[]>([])
   blocksRef.current = blocks
 
@@ -161,7 +170,7 @@ export const IsolatedDraftProvider: React.FC<IsolatedDraftProviderProps> = ({
       const currentBlocks = values[blocksField]
       setBlocks(Array.isArray(currentBlocks) ? currentBlocks : [])
       initializedRef.current = true
-      lastPostedValuesRef.current = JSON.stringify(values)
+      lastPostedValuesRef.current = JSON.stringify(stripSystemFields(values))
     }
   }, [formState, blocksField])
 
@@ -172,7 +181,13 @@ export const IsolatedDraftProvider: React.FC<IsolatedDraftProviderProps> = ({
     if (!initializedRef.current || !formState) return
 
     const values = reduceFieldsToValues(formState, true)
-    const valuesString = JSON.stringify(values)
+    const valuesString = JSON.stringify(stripSystemFields(values))
+
+    if (justSavedRef.current) {
+      justSavedRef.current = false
+      lastPostedValuesRef.current = valuesString
+      return
+    }
 
     // If values did not change, skip sync
     if (valuesString === lastPostedValuesRef.current) return
@@ -288,6 +303,7 @@ export const IsolatedDraftProvider: React.FC<IsolatedDraftProviderProps> = ({
               [blocksField]: blocksRef.current,
             },
           })
+          justSavedRef.current = true
           setIsDirty(false)
         }
       } catch (err) {
