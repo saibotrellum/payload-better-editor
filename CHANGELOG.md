@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org).
 
+## [1.4.4]
+### Fixed
+- The live-preview data channel is registered again, and now gets the slug it needs. 1.4.3 moved the registration to `livePreview: { path, clientProps }` to pass the collection slug - but `renderDocumentSlots` reads `LivePreview.Component` and nothing else, so the slot was skipped entirely and the channel stopped mounting. 1.4.3 is strictly worse than 1.4.2 for live preview: 1.4.2 sent messages that the subscriber discarded, 1.4.3 sent none at all. Measured in a host app, before and after. The registration is back to `{ Component: path }`, and the slug now comes from `useDocumentInfo()` inside the component. That is the only channel available: `renderDocumentSlots` passes no `clientProps` for this slot, and its `serverProps` carries no slug, so a client component there receives no props at all.
+
 ## [1.4.3]
 ### Fixed
 - Live preview reflects unsaved edits again. The data channel was registered as `livePreview: { Component: path }`, which mounts the component but passes it no props - so `LivePreviewDataChannel` read an undefined `collectionSlug` and posted every message without one. `@payloadcms/live-preview` drops those on `if (!collectionSlug && !globalSlug) return initialData`, so `useLivePreview` returned its initial data forever and never emitted an update. Nothing threw: measured in a host app, six well-formed messages reached the preview iframe on the same origin and every one was discarded on that line, which looks exactly like live preview not being configured at all. The slot now carries `clientProps` with the entity's own slug. Affects both collections and globals, and every consumer of 1.4.2 - the channel shipped in that release and has never delivered an update.
