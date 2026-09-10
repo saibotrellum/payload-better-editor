@@ -117,10 +117,11 @@ export const IsolatedDraftProvider: React.FC<IsolatedDraftProviderProps> = ({
       // exactly when it does NOT match, so the two cases collapse into one
       // check with a single meaning: post only when we can read the window and
       // its origin equals the target.
+      let targetOrigin = '*'
       let ready = false
       try {
-        const target = new URL(url, window.location.origin).origin
-        ready = win.location.origin === target
+        targetOrigin = new URL(url, window.location.origin).origin
+        ready = win.location.origin === targetOrigin
       } catch {
         // Cross-origin read - the iframe has navigated to the tenant and the
         // admin cannot inspect it. That is the normal, healthy state on a
@@ -142,7 +143,7 @@ export const IsolatedDraftProvider: React.FC<IsolatedDraftProviderProps> = ({
             globalSlug,
             locale: locale?.code,
           },
-          url,
+          targetOrigin,
         )
       } catch {
         // The iframe can navigate between the check above and this call. A
@@ -158,10 +159,9 @@ export const IsolatedDraftProvider: React.FC<IsolatedDraftProviderProps> = ({
     if (!initializedRef.current && formState) {
       const values = reduceFieldsToValues(formState, true)
       const currentBlocks = values[blocksField]
-      if (Array.isArray(currentBlocks) && currentBlocks.length > 0) {
-        setBlocks(currentBlocks)
-        initializedRef.current = true
-      }
+      setBlocks(Array.isArray(currentBlocks) ? currentBlocks : [])
+      initializedRef.current = true
+      lastPostedValuesRef.current = JSON.stringify(values)
     }
   }, [formState, blocksField])
 
@@ -172,6 +172,11 @@ export const IsolatedDraftProvider: React.FC<IsolatedDraftProviderProps> = ({
     if (!initializedRef.current || !formState) return
 
     const values = reduceFieldsToValues(formState, true)
+    const valuesString = JSON.stringify(values)
+
+    // If values did not change, skip sync
+    if (valuesString === lastPostedValuesRef.current) return
+
     const formBlocks = values[blocksField]
 
     // Map latest field values from formState by block id
@@ -193,13 +198,13 @@ export const IsolatedDraftProvider: React.FC<IsolatedDraftProviderProps> = ({
       return existing
     })
 
-    const valuesString = JSON.stringify(values)
+    lastPostedValuesRef.current = valuesString
+    setIsDirty(true)
+
     if (hasBlockFieldChange) {
       setBlocks(updated)
-      lastPostedValuesRef.current = valuesString
       postToIframe(updated)
-    } else if (valuesString !== lastPostedValuesRef.current) {
-      lastPostedValuesRef.current = valuesString
+    } else {
       postToIframe(currentBlocks)
     }
   }, [formState, blocksField, postToIframe])
@@ -273,7 +278,7 @@ export const IsolatedDraftProvider: React.FC<IsolatedDraftProviderProps> = ({
   )
 
   const save = useCallback(
-    async (status: 'draft' | 'published' = 'published') => {
+    async (status: 'draft' | 'published' = 'draft') => {
       setIsSaving(true)
       try {
         if (submit) {

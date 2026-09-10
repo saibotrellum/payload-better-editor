@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org).
 
+## [1.4.6]
+### Fixed
+- Live preview iframe messaging now resolves the correct target origin rather than passing full URLs with pathnames, which caused browser `postMessage` to reject the dispatch with a SyntaxError.
+- Editing text fields in the editor now properly sets `isDirty` on the isolated draft, activating the save button.
+- The editor toolbar save button now saves as `draft` by default and displays "Entwurf speichern".
+
 ## [1.4.5]
 ### Fixed
 - The preview keeps unsaved edits on a multi-domain admin. Two separate defects, both invisible while the admin and the preview share a host. First, the draft was posted into an iframe that had not navigated yet: a fresh iframe shows `about:blank`, which inherits the ADMIN's origin, while its `src` already names the tenant, so the browser refused the message with `The target origin provided ('http://tenant.example') does not match the recipient window's origin ('http://admin.example')`. Neither `src` nor `contentDocument` tells the two states apart - `src` is identical in both, and the document is unreadable in one - but reading the window's own origin does: it throws exactly when the iframe has reached the tenant, so the throw is the signal to post and a readable origin that differs from the target is the signal to wait. Second, `mostRecentUpdate` was forwarded on renders that changed nothing; Payload republishes it as a new object, every forwarded event makes the preview reload, and a reload re-fetches the SAVED document - so an unsaved edit was discarded while the field kept its value, which reads as "the preview reloads and comes back showing the old text". Content is now compared before forwarding, not object identity.

@@ -53,10 +53,10 @@ export const PreviewToolbar = React.memo<PreviewToolbarProps>(({
         <HistoryButtons history={history} />
         <button
           type="button"
-          onClick={() => void draft.save()}
+          onClick={() => void draft.save('draft')}
           disabled={draft.isSaving || !draft.isDirty}
           className={`better-editor__save-btn ${draft.isDirty ? 'better-editor__save-btn--dirty' : ''}`}
-          title={draft.isDirty ? 'Änderungen in Payload speichern' : 'Keine ungespeicherten Änderungen'}
+          title={draft.isDirty ? 'Entwurf speichern' : 'Keine ungespeicherten Änderungen'}
           style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -72,7 +72,7 @@ export const PreviewToolbar = React.memo<PreviewToolbarProps>(({
             transition: 'background 0.15s ease',
           }}
         >
-          {draft.isSaving ? 'Speichere...' : draft.isDirty ? '● Speichern' : 'Gespeichert'}
+          {draft.isSaving ? 'Speichere...' : draft.isDirty ? '● Entwurf speichern' : 'Gespeichert'}
         </button>
       </div>
       <div className="better-editor__preview-toolbar-right">
