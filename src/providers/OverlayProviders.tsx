@@ -9,15 +9,19 @@ import {
   type BetterEditorConfigProviderProps,
 } from './BetterEditorConfigProvider.js'
 
+import { IsolatedDraftProvider } from '../state/useIsolatedDraft.js'
+
 export type OverlayProvidersProps = {
   onClose: () => void
   onReset?: () => void
+  blocksField?: string
   children: React.ReactNode
 } & Pick<BetterEditorConfigProviderProps, 'storageNamespace' | 'adminPortalSelector'>
 
 export const OverlayProviders: React.FC<OverlayProvidersProps> = ({
   onClose,
   onReset,
+  blocksField = 'layout',
   children,
   storageNamespace,
   adminPortalSelector,
@@ -28,7 +32,9 @@ export const OverlayProviders: React.FC<OverlayProvidersProps> = ({
       adminPortalSelector={adminPortalSelector}
     >
       <BetterEditorSettingsProvider>
-        <EditorHistoryProvider>{children}</EditorHistoryProvider>
+        <EditorHistoryProvider>
+          <IsolatedDraftProvider blocksField={blocksField}>{children}</IsolatedDraftProvider>
+        </EditorHistoryProvider>
       </BetterEditorSettingsProvider>
     </BetterEditorConfigProvider>
   </OverlayErrorBoundary>

@@ -16,6 +16,8 @@ import {
 import type { useEditorHistory } from '../state/useEditorHistory.js'
 import { useBetterEditorT } from '../i18n/useBetterEditorT.js'
 
+import { useIsolatedDraft } from '../state/useIsolatedDraft.js'
+
 export type PreviewToolbarProps = {
   history: ReturnType<typeof useEditorHistory>
   viewport: Viewport
@@ -43,9 +45,36 @@ export const PreviewToolbar = React.memo<PreviewToolbarProps>(({
   onSidebarToggle,
 }) => {
   const t = useBetterEditorT()
+  const draft = useIsolatedDraft()
+
   return (
     <div className="better-editor__preview-toolbar">
-      <HistoryButtons history={history} />
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <HistoryButtons history={history} />
+        <button
+          type="button"
+          onClick={() => void draft.save()}
+          disabled={draft.isSaving || !draft.isDirty}
+          className={`better-editor__save-btn ${draft.isDirty ? 'better-editor__save-btn--dirty' : ''}`}
+          title={draft.isDirty ? 'Änderungen in Payload speichern' : 'Keine ungespeicherten Änderungen'}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            padding: '4px 10px',
+            borderRadius: '4px',
+            fontSize: '12px',
+            fontWeight: 500,
+            cursor: draft.isDirty ? 'pointer' : 'default',
+            background: draft.isDirty ? '#10b981' : 'rgba(255, 255, 255, 0.1)',
+            color: draft.isDirty ? '#ffffff' : 'rgba(255, 255, 255, 0.5)',
+            border: 'none',
+            transition: 'background 0.15s ease',
+          }}
+        >
+          {draft.isSaving ? 'Speichere...' : draft.isDirty ? '● Speichern' : 'Gespeichert'}
+        </button>
+      </div>
       <div className="better-editor__preview-toolbar-right">
         <WidthChip iframeRef={iframeRef} />
         <ViewportToggle value={viewport} onChange={onViewportChange} />

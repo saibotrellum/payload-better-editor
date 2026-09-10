@@ -1,7 +1,8 @@
 'use client'
 
-import { useAllFormFields, useForm } from '@payloadcms/ui'
+import { useAllFormFields } from '@payloadcms/ui'
 import { useEditorHistory } from '../../state/useEditorHistory.js'
+import { useIsolatedDraft } from '../../state/useIsolatedDraft.js'
 import { splitFieldPath } from '../../internal/path.js'
 
 type Args = {
@@ -24,13 +25,13 @@ export const useBlockActions = ({
   onClearSelection,
 }: Args) => {
   const [fields] = useAllFormFields()
-  const { addFieldRow, dispatchFields } = useForm()
   const { commit } = useEditorHistory()
+  const draft = useIsolatedDraft()
 
   const split = selectedBlockPath ? splitFieldPath(selectedBlockPath) : null
   const parentPath = split?.parent ?? ''
   const rowIndex = split ? split.index : NaN
-  const rowCount = parentPath ? rowCountAt(fields, parentPath) : 0
+  const rowCount = draft.blocks.length > 0 ? draft.blocks.length : (parentPath ? rowCountAt(fields, parentPath) : 0)
   const canMutate = !Number.isNaN(rowIndex) && parentPath !== '' && rowIndex < rowCount
   const canMoveUp = canMutate && rowIndex > 0
   const canMoveDown = canMutate && rowIndex < rowCount - 1
@@ -43,35 +44,27 @@ export const useBlockActions = ({
     if (kind === 'move-up' && !canMoveUp) return
     if (kind === 'move-down' && !canMoveDown) return
     if ((kind === 'duplicate' || kind === 'remove') && !canMutate) return
-    const liveCount = rowCountAt(fields, parentPath)
+    const liveCount = draft.blocks.length > 0 ? draft.blocks.length : rowCountAt(fields, parentPath)
     if (rowIndex >= liveCount) return
     if (kind === 'move-down' && rowIndex >= liveCount - 1) return
+
     commit(() => {
       switch (kind) {
         case 'move-up':
-          dispatchFields({
-            type: 'MOVE_ROW',
-            path: parentPath,
-            moveFromIndex: rowIndex,
-            moveToIndex: rowIndex - 1,
-          })
+          draft.moveBlock(rowIndex, rowIndex - 1)
           break
         case 'move-down':
-          dispatchFields({
-            type: 'MOVE_ROW',
-            path: parentPath,
-            moveFromIndex: rowIndex,
-            moveToIndex: rowIndex + 1,
-          })
+          draft.moveBlock(rowIndex, rowIndex + 1)
           break
         case 'duplicate':
-          dispatchFields({ type: 'DUPLICATE_ROW', path: parentPath, rowIndex })
+          draft.duplicateBlock(rowIndex)
           break
         case 'remove':
-          dispatchFields({ type: 'REMOVE_ROW', path: parentPath, rowIndex })
+          draft.removeBlock(rowIndex)
           break
       }
     })
+
     if (kind === 'remove') {
       onClearSelection()
       return
@@ -88,7 +81,6 @@ export const useBlockActions = ({
 
   const addAfter = ({
     blockType,
-    schemaPath,
     containerPath,
     index,
   }: {
@@ -98,12 +90,7 @@ export const useBlockActions = ({
     index: number
   }) => {
     commit(() => {
-      addFieldRow({
-        blockType,
-        path: containerPath,
-        rowIndex: index,
-        schemaPath,
-      })
+      draft.addBlock(index, blockType || 'unknown')
     })
     onSelectPath(`${containerPath}.${index}`)
   }

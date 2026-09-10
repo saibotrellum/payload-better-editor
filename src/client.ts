@@ -56,6 +56,9 @@ export { useBlockSelection } from './providers/BlockSelectionProvider.js'
 export { BlockSelectionProvider } from './providers/BlockSelectionProvider.js'
 export type { BlockSelection } from './providers/BlockSelectionProvider.js'
 
+export { useIsolatedDraft, IsolatedDraftProvider } from './state/useIsolatedDraft.js'
+export type { IsolatedDraftContextValue } from './state/useIsolatedDraft.js'
+
 /**
  * Spread these props on every block wrapper in your frontend so the
  * Better Editor can target it. The plugin uses the resulting
