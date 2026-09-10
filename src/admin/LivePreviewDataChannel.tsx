@@ -43,13 +43,30 @@ export type LivePreviewDataChannelProps = {
  * already posts it. This component is only the unsaved-edit half.
  */
 export const LivePreviewDataChannel: React.FC<LivePreviewDataChannelProps> = ({
-  collectionSlug,
-  globalSlug,
+  collectionSlug: collectionSlugProp,
+  globalSlug: globalSlugProp,
 }) => {
   const { iframeRef, url } = useLivePreviewContext()
   const [formState] = useAllFormFields()
-  const { id } = useDocumentInfo()
+  const docInfo = useDocumentInfo()
+  const { id } = docInfo
   const locale = useLocale()
+
+  // The slugs come from context, not from props, and that is deliberate.
+  //
+  // Payload renders a document-view slot as an already-built element - the Edit
+  // view does `CustomLivePreview || <LivePreviewWindow collectionSlug={...} />` -
+  // so a `clientProps` entry on `views.edit.livePreview` never reaches this
+  // component. Measured after shipping exactly that: the registration carried the
+  // slug, `dist` carried the registration, and every posted message still had
+  // `collectionSlug: null`.
+  //
+  // `useDocumentInfo()` does resolve here - the `id` above comes from it and has
+  // always been populated - and it carries both slugs. Props stay accepted so a
+  // consumer mounting this component by hand can still say which document it is
+  // for, but nothing has to pass them.
+  const collectionSlug = collectionSlugProp ?? docInfo.collectionSlug
+  const globalSlug = globalSlugProp ?? docInfo.globalSlug
 
   useEffect(() => {
     // No iframe means the overlay is closed - there is nothing to talk to. This
