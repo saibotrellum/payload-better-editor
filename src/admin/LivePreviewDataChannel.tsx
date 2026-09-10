@@ -1,51 +1,40 @@
 'use client'
 
-import { useAllFormFields, useDocumentInfo, useLivePreviewContext, useLocale } from '@payloadcms/ui'
-import { reduceFieldsToValues } from 'payload/shared'
-import { useEffect } from 'react'
-
 export type LivePreviewDataChannelProps = {
   collectionSlug?: string
   globalSlug?: string
 }
 
 /**
- * Posts the current form values into the overlay's preview iframe, so the preview
- * reflects edits that have not been saved.
+ * Occupies Payload's live-preview slot and renders nothing.
  *
- * ## Why this exists
+ * ## Why an empty component is the point
  *
- * Payload ships this behaviour in `LivePreviewWindow`: on every form change it
- * reduces the form state to values and posts `{ type: 'payload-live-preview', data }`
- * to the iframe it rendered itself. A preview route running `useLivePreview` listens
- * for exactly that message.
+ * `DefaultEditView` renders `CustomLivePreview || <LivePreviewWindow/>`. Leaving
+ * the slot empty therefore mounts Payload's own window, which builds a SECOND
+ * iframe against the shared ref - the overlay already owns the visible preview,
+ * so the two fight over it. Filling the slot with a component that returns null
+ * is what keeps that from happening.
  *
- * The overlay replaces that window, and replacing it removes the sender along with
- * it. Measured before this component existed: after one field edit the overlay's
- * iframe had received nothing at all, while Payload's own hidden iframe held two
- * `payload-live-preview` messages. Nothing errored - the data simply went to an
- * iframe nobody was looking at.
+ * ## Why it no longer sends anything
  *
- * ## Where it renders
+ * It used to be the sender too: on every form change it reduced form state to
+ * values and posted `{ type: 'payload-live-preview', data }` into the iframe.
+ * `useIsolatedDraft` now owns that channel, because the draft it posts is not
+ * the form state - block order, additions and deletions live in the isolated
+ * draft, and posting form state over the top of them put the old block list
+ * back. Two senders on one channel also raced, and the loser was whichever
+ * posted second.
  *
- * `admin.components.views.edit.livePreview`, which Payload's DefaultEditView renders
- * INSTEAD of its own `LivePreviewWindow` (`CustomLivePreview || <LivePreviewWindow/>`).
- * The plugin fills that slot for every configured entity, so a host gets this without
- * wiring anything. Occupying the slot is load-bearing twice over: it supplies the
- * sender, and it stops a second iframe from being mounted against the shared ref.
- *
- * It renders nothing. The slot is a mounting point, not a place in the layout - the
- * overlay owns the visible preview.
+ * Keeping the props is deliberate: a host that mounts this component by hand
+ * can still say which entity it is for, and removing them would be a breaking
+ * change for no gain.
  *
  * ## What it does not do
  *
- * `payload-document-event` on save stays with the overlay's own selection sync, which
- * already posts it. This component is only the unsaved-edit half.
+ * `payload-document-event` on save stays with the overlay's own selection sync,
+ * which already posts it.
  */
-export const LivePreviewDataChannel: React.FC<LivePreviewDataChannelProps> = () => {
-  // Besetzt den Payload-LivePreview-Slot, um ein doppeltes Iframe zu verhindern.
-  // Sendet keine Daten, da useIsolatedDraft den Preview-Kanal isoliert verwaltet.
-  return null
-}
+export const LivePreviewDataChannel: React.FC<LivePreviewDataChannelProps> = () => null
 
 export default LivePreviewDataChannel

@@ -130,9 +130,9 @@ const LiveEditorOverlayInner: React.FC<InnerProps> = ({
    * heard about an unsaved edit, which reads as "live preview does not work".
    *
    * Using the context ref makes this overlay's iframe the one everything else can
-   * find. `LivePreviewDataChannel` reads the same ref to post form values into it,
-   * and taking the slot that renders that component is also what stops Payload from
-   * mounting a second iframe against this ref - the two changes only work together.
+   * find. `IsolatedDraftProvider` reads the same ref to post the unsaved draft
+   * into it, and `LivePreviewDataChannel` holds the slot that would otherwise
+   * mount a second iframe against this ref - the two only work together.
    *
    * Falls back to a local ref when the overlay renders outside a LivePreviewProvider,
    * where the context returns its default and the ref is not shared with anyone.

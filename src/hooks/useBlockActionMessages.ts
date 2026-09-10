@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { useAllFormFields, useForm } from '@payloadcms/ui'
+import { useAllFormFields } from '@payloadcms/ui'
 import { listenForParentInbound } from '../internal/postmessage.js'
 import { splitFieldPath } from '../internal/path.js'
 import type { FormState } from 'payload'

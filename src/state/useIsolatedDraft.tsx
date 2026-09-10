@@ -4,8 +4,25 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { useAllFormFields, useDocumentInfo, useForm, useLivePreviewContext, useLocale } from '@payloadcms/ui'
 import { reduceFieldsToValues } from 'payload/shared'
 
+/**
+ * One row of a blocks field, as it travels between form state, the isolated
+ * draft and the preview iframe.
+ *
+ * `unknown` rather than `any` for the values: the shape is whatever the host's
+ * block config declares, so nothing here can name it, but every read still has
+ * to narrow. `id` and `blockType` are the two keys this code does rely on -
+ * `id` matches a row to its DOM node in the preview, `blockType` picks the
+ * template when a new block has no markup yet. Both are optional because a
+ * freshly added row has neither until it is written.
+ */
+export type DraftBlock = {
+  id?: string
+  blockType?: string
+  [key: string]: unknown
+}
+
 export type IsolatedDraftContextValue = {
-  blocks: Array<Record<string, any>>
+  blocks: DraftBlock[]
   isDirty: boolean
   isSaving: boolean
   moveBlock: (fromIndex: number, toIndex: number) => void
@@ -57,15 +74,15 @@ export const IsolatedDraftProvider: React.FC<IsolatedDraftProviderProps> = ({
   const collectionSlug = docInfo.collectionSlug
   const globalSlug = docInfo.globalSlug
 
-  const [blocks, setBlocks] = useState<Array<Record<string, any>>>([])
+  const [blocks, setBlocks] = useState<DraftBlock[]>([])
   const [isDirty, setIsDirty] = useState<boolean>(false)
   const [isSaving, setIsSaving] = useState<boolean>(false)
   const initializedRef = useRef<boolean>(false)
-  const blocksRef = useRef<Array<Record<string, any>>>([])
+  const blocksRef = useRef<DraftBlock[]>([])
   blocksRef.current = blocks
 
   const postToIframe = useCallback(
-    (targetBlocks: Array<Record<string, any>>) => {
+    (targetBlocks: DraftBlock[]) => {
       const frame = iframeRef?.current
       if (!frame || !url) return
 
@@ -158,7 +175,7 @@ export const IsolatedDraftProvider: React.FC<IsolatedDraftProviderProps> = ({
     const formBlocks = values[blocksField]
 
     // Map latest field values from formState by block id
-    const formBlockMap = new Map<string, Record<string, any>>()
+    const formBlockMap = new Map<string, DraftBlock>()
     if (Array.isArray(formBlocks)) {
       for (const b of formBlocks) {
         if (b && b.id) formBlockMap.set(String(b.id), b)
@@ -208,11 +225,14 @@ export const IsolatedDraftProvider: React.FC<IsolatedDraftProviderProps> = ({
       const prev = blocksRef.current
       if (index < 0 || index >= prev.length) return
       const target = prev[index]
-      const duplicated = {
-        ...JSON.parse(JSON.stringify(target)),
+      const duplicated: DraftBlock = {
+        ...(JSON.parse(JSON.stringify(target)) as DraftBlock),
         id: generateRowId(),
       }
-      delete (duplicated as any)._id
+      // The copy carries the source row's Mongo `_id`. Left in place, the save
+      // writes two rows claiming the same document id and the second one wins,
+      // so the duplicate silently replaces its original.
+      delete duplicated._id
       const next = [...prev]
       next.splice(index + 1, 0, duplicated)
       setBlocks(next)

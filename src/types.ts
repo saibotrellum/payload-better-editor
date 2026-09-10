@@ -67,15 +67,20 @@ export type BetterEditorConfig = {
    */
   defaultOpen?: boolean
   /**
-   * Post unsaved form values into the preview iframe, so the preview reflects an
-   * edit before it is saved. Requires the preview route to run Payload's
-   * `useLivePreview`; with `RefreshRouteOnSave` instead, the preview keeps updating
-   * on save and this changes nothing. Defaults to `true`.
+   * Claim `views.edit.livePreview` so the preview can reflect an edit before it
+   * is saved. Requires the preview route to run Payload's `useLivePreview`; with
+   * `RefreshRouteOnSave` instead, the preview keeps updating on save and this
+   * changes nothing. Defaults to `true`.
    *
-   * Setting it to `false` leaves `views.edit.livePreview` untouched, so Payload
-   * renders its own `LivePreviewWindow` again - a second iframe, and the preview
-   * then updates only on save. Turn it off if you want Payload's live-preview view
-   * alongside the overlay.
+   * The name is older than the mechanism. The slot used to hold the sender; the
+   * unsaved draft now goes out through `useIsolatedDraft`, and what the slot
+   * does today is stay occupied. That is still load-bearing: left empty, Payload
+   * renders its own `LivePreviewWindow` into it, which builds a SECOND iframe
+   * against the same ref as the overlay's.
+   *
+   * Setting it to `false` gives that view back to Payload deliberately - a
+   * second iframe, and a preview that updates only on save. Turn it off if you
+   * want Payload's live-preview view alongside the overlay.
    */
   livePreviewData?: boolean
 }

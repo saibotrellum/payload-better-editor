@@ -7,9 +7,12 @@ export { LiveEditorToggle } from './admin/LiveEditorToggle.js'
 export type { LiveEditorToggleProps } from './admin/LiveEditorToggle.js'
 
 /**
- * Posts unsaved form values into the overlay's preview iframe. Auto-injected by
- * the plugin factory into `views.edit.livePreview`; consumers usually don't render
- * it directly. Pass `livePreviewData: false` to the plugin to leave that slot alone.
+ * Occupies `views.edit.livePreview` and renders nothing, which is what stops
+ * Payload from mounting a second preview iframe against the shared ref. It used
+ * to post unsaved form values as well; `useIsolatedDraft` owns that channel now,
+ * because the draft it sends is not the form state. Auto-injected by the plugin
+ * factory, so consumers usually don't render it directly. Pass
+ * `livePreviewData: false` to leave the slot alone.
  */
 export { LivePreviewDataChannel } from './admin/LivePreviewDataChannel.js'
 export type { LivePreviewDataChannelProps } from './admin/LivePreviewDataChannel.js'
