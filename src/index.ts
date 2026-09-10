@@ -91,10 +91,7 @@ const withToggleInjected = <T extends CollectionConfig | GlobalConfig>(
  * An entity that already declares a component here keeps it - a host that went to the
  * trouble of writing its own live-preview view means it.
  */
-const withDataChannelInjected = <T extends CollectionConfig | GlobalConfig>(
-  entity: T,
-  kind: 'collection' | 'global',
-): T => {
+const withDataChannelInjected = <T extends CollectionConfig | GlobalConfig>(entity: T): T => {
   const admin = { ...(entity.admin ?? {}) } as NonNullable<T['admin']>
   const components = { ...(admin.components ?? {}) } as Record<string, unknown>
   const views = { ...((components.views as Record<string, unknown>) ?? {}) }
@@ -102,21 +99,8 @@ const withDataChannelInjected = <T extends CollectionConfig | GlobalConfig>(
 
   if (edit.livePreview) return entity
 
-  // The slug MUST travel with the component. `LivePreviewDataChannel` puts it in
-  // every message it posts, and `@payloadcms/live-preview` drops any message that
-  // arrives without one:
-  //
-  //     if (!collectionSlug && !globalSlug) return initialData
-  //
-  // Registering the bare path leaves the prop undefined, so the subscriber returns
-  // its initial data forever and `useLivePreview` never emits an update. Nothing
-  // errors - the preview simply stops reflecting unsaved edits, which is
-  // indistinguishable from live preview not being wired up at all. Measured in a
-  // host app: six well-formed messages reached the iframe, same origin, and every
-  // one of them was discarded on that line.
-  const clientProps =
-    kind === 'collection' ? { collectionSlug: entity.slug } : { globalSlug: entity.slug }
-
+  // The slug reaches the component through `useDocumentInfo()`, not through props -
+  // see the note in LivePreviewDataChannel for why config plumbing does not work here.
   return {
     ...entity,
     admin: {
@@ -125,10 +109,12 @@ const withDataChannelInjected = <T extends CollectionConfig | GlobalConfig>(
         ...components,
         views: {
           ...views,
-          edit: {
-            ...edit,
-            livePreview: { path: DATA_CHANNEL_COMPONENT_PATH, clientProps },
-          },
+          // `renderDocumentSlots` reads `LivePreview.Component` and nothing else, so
+          // this key has to be `Component`. Writing the PayloadComponent object
+          // straight into the slot (`{ path, clientProps }`) type-checks, ships, and
+          // silently registers NOTHING - the slot is skipped, the channel never
+          // mounts, and the preview stops receiving messages altogether.
+          edit: { ...edit, livePreview: { Component: DATA_CHANNEL_COMPONENT_PATH } },
         },
       },
     },
@@ -228,7 +214,7 @@ export const betterEditor =
           warnMissingBlocksField('collection', collection.slug, blocksField)
         }
         const withToggle = withToggleInjected(collection, 'edit', toggleClientProps(blocksField))
-        return injectDataChannel ? withDataChannelInjected(withToggle, 'collection') : withToggle
+        return injectDataChannel ? withDataChannelInjected(withToggle) : withToggle
       })
     }
 
@@ -240,7 +226,7 @@ export const betterEditor =
           warnMissingBlocksField('global', global.slug, blocksField)
         }
         const withToggle = withToggleInjected(global, 'elements', toggleClientProps(blocksField))
-        return injectDataChannel ? withDataChannelInjected(withToggle, 'global') : withToggle
+        return injectDataChannel ? withDataChannelInjected(withToggle) : withToggle
       })
     }
 

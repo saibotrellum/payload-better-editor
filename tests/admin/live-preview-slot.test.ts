@@ -3,23 +3,25 @@ import type { Config } from 'payload'
 import { betterEditor } from '../../src/index'
 
 /**
- * The data channel's slug must travel with the component registration.
+ * The live-preview slot has exactly one shape Payload reads, and getting it wrong
+ * fails silently in both directions.
  *
- * `LivePreviewDataChannel` reads `collectionSlug` / `globalSlug` from its props and
- * puts them in every message it posts. `@payloadcms/live-preview` discards any
- * message that arrives without one:
+ * `renderDocumentSlots` (@payloadcms/next) is the only producer of the Edit view's
+ * `LivePreview` prop, and it reads one key:
  *
- *     if (!collectionSlug && !globalSlug) return initialData
+ *     if (LivePreview?.Component) { ... }
  *
- * Registering the bare component path leaves those props undefined, so the
- * subscriber keeps returning its initial data and `useLivePreview` never emits an
- * update. Nothing throws. The preview simply stops reflecting unsaved edits, which
- * looks exactly like live preview not being configured - and that is how it went
- * unnoticed: in a host app, six well-formed messages reached the iframe on the same
- * origin and every one was dropped on that line.
+ * So the slot value must be `{ Component: <path> }`. Writing a PayloadComponent
+ * object into the slot directly - `{ path, clientProps }` - type-checks against
+ * `DefaultDocumentViewConfig`, builds, ships, and registers NOTHING: the slot is
+ * skipped, the channel never mounts, and the preview receives no messages at all.
+ * That shipped once, and the symptom (a preview that ignores unsaved edits) is the
+ * same one a mis-registered channel produces, which is what made it hard to see.
  *
- * These tests read the registration rather than a helper, because the defect was in
- * the registration and a helper-level test would have passed throughout.
+ * The slug the channel needs does NOT travel through this config. `renderDocumentSlots`
+ * passes no `clientProps` for this slot and its `serverProps` carries no slug either,
+ * so a client component here receives no props whatsoever. `LivePreviewDataChannel`
+ * reads `useDocumentInfo()` instead - the slot renders inside `DocumentInfoProvider`.
  */
 
 const makeConfig = (): Config =>
@@ -35,35 +37,32 @@ const livePreviewOf = (entity: unknown): Record<string, unknown> | undefined =>
   (entity as { admin?: { components?: { views?: { edit?: { livePreview?: Record<string, unknown> } } } } })
     ?.admin?.components?.views?.edit?.livePreview
 
+const DATA_CHANNEL = 'payload-better-editor/client#LivePreviewDataChannel'
+
 describe('live preview slot registration', () => {
-  it('passes the collection slug as a client prop', () => {
+  it('registers the channel under `Component`, the only key Payload reads', () => {
     const config = betterEditor({ collections: ['pages'] })(makeConfig())
     const slot = livePreviewOf(config.collections?.[0])
 
     expect(slot).toBeDefined()
-    expect(slot?.path).toBe('payload-better-editor/client#LivePreviewDataChannel')
-    expect(slot?.clientProps).toEqual({ collectionSlug: 'pages' })
+    expect(slot?.Component).toBe(DATA_CHANNEL)
   })
 
-  it('passes the global slug as a client prop', () => {
+  it('does the same for globals', () => {
     const config = betterEditor({ globals: ['homepage'] })(makeConfig())
-    const slot = livePreviewOf(config.globals?.[0])
-
-    expect(slot?.clientProps).toEqual({ globalSlug: 'homepage' })
+    expect(livePreviewOf(config.globals?.[0])?.Component).toBe(DATA_CHANNEL)
   })
 
-  it('never registers the component without a slug', () => {
-    // The exact shape that broke live preview: a registration carrying no props.
+  it('never puts the component path anywhere but `Component`', () => {
+    // The exact mistake that silently unregistered the channel: a PayloadComponent
+    // object written straight into the slot, where `path` is the only thing naming
+    // the component and `renderDocumentSlots` finds no `Component` to render.
     const config = betterEditor({ collections: ['pages'], globals: ['homepage'] })(makeConfig())
 
     for (const entity of [config.collections?.[0], config.globals?.[0]]) {
       const slot = livePreviewOf(entity)
-      const props = slot?.clientProps as Record<string, unknown> | undefined
-      expect(props, 'registration carries no clientProps').toBeDefined()
-      expect(
-        Boolean(props?.collectionSlug) || Boolean(props?.globalSlug),
-        'neither collectionSlug nor globalSlug is set - every message would be dropped',
-      ).toBe(true)
+      expect(slot?.Component, 'slot has no `Component` - Payload would skip it').toBeDefined()
+      expect(slot?.path, 'a bare `path` on the slot is never read').toBeUndefined()
     }
   })
 
