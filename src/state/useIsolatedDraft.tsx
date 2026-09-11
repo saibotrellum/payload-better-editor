@@ -137,14 +137,20 @@ export const IsolatedDraftProvider: React.FC<IsolatedDraftProviderProps> = ({
     [iframeRef, url, formState, id, blocksField, collectionSlug, globalSlug, locale],
   )
 
-  // Initialize from formState on first load
+  // Initialize from formState whenever formState loads or updates
   useEffect(() => {
-    if (!initializedRef.current && formState) {
-      const values = reduceFieldsToValues(formState, true)
-      const currentBlocks = values[blocksField]
-      setBlocks(Array.isArray(currentBlocks) ? currentBlocks : [])
-      initializedRef.current = true
-      lastPostedValuesRef.current = JSON.stringify(stripSystemFields(values))
+    if (!formState) return
+    const values = reduceFieldsToValues(formState, true)
+    const currentBlocks = values[blocksField]
+    if (Array.isArray(currentBlocks)) {
+      if (!initializedRef.current) {
+        setBlocks(currentBlocks)
+        initializedRef.current = true
+        lastPostedValuesRef.current = JSON.stringify(stripSystemFields(values))
+      } else if (blocksRef.current.length === 0 && currentBlocks.length > 0) {
+        setBlocks(currentBlocks)
+        lastPostedValuesRef.current = JSON.stringify(stripSystemFields(values))
+      }
     }
   }, [formState, blocksField])
 
@@ -204,16 +210,7 @@ export const IsolatedDraftProvider: React.FC<IsolatedDraftProviderProps> = ({
   const moveBlock = useCallback(
     (fromIndex: number, toIndex: number, parentPath?: string) => {
       const targetPath = parentPath || blocksField
-      const prev = blocksRef.current
-      if (fromIndex < 0 || fromIndex >= prev.length || toIndex < 0 || toIndex >= prev.length) {
-        return
-      }
-      const next = [...prev]
-      const [moved] = next.splice(fromIndex, 1)
-      next.splice(toIndex, 0, moved)
-      setBlocks(next)
-      setIsDirty(true)
-      postToIframe(next)
+      const isTopLevel = targetPath === blocksField
 
       // Synchronisiert die Block-Verschiebung mit dem Payload FormState (wichtig für Gliederungsbaum und Payload-Save-Buttons)
       if (moveFieldRow) {
@@ -229,26 +226,29 @@ export const IsolatedDraftProvider: React.FC<IsolatedDraftProviderProps> = ({
       if (setModified) {
         setModified(true)
       }
+
+      const prev = blocksRef.current.length > 0
+        ? blocksRef.current
+        : (formState ? ((reduceFieldsToValues(formState, true)[blocksField] as DraftBlock[]) || []) : [])
+
+      if (isTopLevel && prev.length > 0 && fromIndex >= 0 && fromIndex < prev.length && toIndex >= 0 && toIndex < prev.length) {
+        const next = [...prev]
+        const [moved] = next.splice(fromIndex, 1)
+        next.splice(toIndex, 0, moved)
+        setBlocks(next)
+        setIsDirty(true)
+        postToIframe(next)
+      } else {
+        setIsDirty(true)
+      }
     },
-    [blocksField, moveFieldRow, dispatchFields, setModified, postToIframe],
+    [blocksField, moveFieldRow, dispatchFields, setModified, postToIframe, formState],
   )
 
   const duplicateBlock = useCallback(
     (index: number, parentPath?: string) => {
       const targetPath = parentPath || blocksField
-      const prev = blocksRef.current
-      if (index < 0 || index >= prev.length) return
-      const target = prev[index]
-      const duplicated: DraftBlock = {
-        ...(JSON.parse(JSON.stringify(target)) as DraftBlock),
-        id: generateRowId(),
-      }
-      delete duplicated._id
-      const next = [...prev]
-      next.splice(index + 1, 0, duplicated)
-      setBlocks(next)
-      setIsDirty(true)
-      postToIframe(next)
+      const isTopLevel = targetPath === blocksField
 
       if (dispatchFields) {
         dispatchFields({
@@ -260,20 +260,34 @@ export const IsolatedDraftProvider: React.FC<IsolatedDraftProviderProps> = ({
       if (setModified) {
         setModified(true)
       }
+
+      const prev = blocksRef.current.length > 0
+        ? blocksRef.current
+        : (formState ? ((reduceFieldsToValues(formState, true)[blocksField] as DraftBlock[]) || []) : [])
+
+      if (isTopLevel && prev.length > 0 && index >= 0 && index < prev.length) {
+        const target = prev[index]
+        const duplicated: DraftBlock = {
+          ...(JSON.parse(JSON.stringify(target)) as DraftBlock),
+          id: generateRowId(),
+        }
+        delete duplicated._id
+        const next = [...prev]
+        next.splice(index + 1, 0, duplicated)
+        setBlocks(next)
+        setIsDirty(true)
+        postToIframe(next)
+      } else {
+        setIsDirty(true)
+      }
     },
-    [blocksField, dispatchFields, setModified, postToIframe],
+    [blocksField, dispatchFields, setModified, postToIframe, formState],
   )
 
   const removeBlock = useCallback(
     (index: number, parentPath?: string) => {
       const targetPath = parentPath || blocksField
-      const prev = blocksRef.current
-      if (index < 0 || index >= prev.length) return
-      const next = [...prev]
-      next.splice(index, 1)
-      setBlocks(next)
-      setIsDirty(true)
-      postToIframe(next)
+      const isTopLevel = targetPath === blocksField
 
       if (removeFieldRow) {
         removeFieldRow({ path: targetPath, rowIndex: index })
@@ -287,38 +301,62 @@ export const IsolatedDraftProvider: React.FC<IsolatedDraftProviderProps> = ({
       if (setModified) {
         setModified(true)
       }
+
+      const prev = blocksRef.current.length > 0
+        ? blocksRef.current
+        : (formState ? ((reduceFieldsToValues(formState, true)[blocksField] as DraftBlock[]) || []) : [])
+
+      if (isTopLevel && prev.length > 0 && index >= 0 && index < prev.length) {
+        const next = [...prev]
+        next.splice(index, 1)
+        setBlocks(next)
+        setIsDirty(true)
+        postToIframe(next)
+      } else {
+        setIsDirty(true)
+      }
     },
-    [blocksField, removeFieldRow, dispatchFields, setModified, postToIframe],
+    [blocksField, removeFieldRow, dispatchFields, setModified, postToIframe, formState],
   )
 
   const addBlock = useCallback(
     (index: number, blockType: string, parentPath?: string, schemaPath?: string) => {
       const targetPath = parentPath || blocksField
       const targetSchemaPath = schemaPath || blocksField
-      const prev = blocksRef.current
-      const newBlock = {
+      const isTopLevel = targetPath === blocksField
+
+      const prev = blocksRef.current.length > 0
+        ? blocksRef.current
+        : (formState ? ((reduceFieldsToValues(formState, true)[blocksField] as DraftBlock[]) || []) : [])
+
+      const newBlock: DraftBlock = {
         id: generateRowId(),
         blockType,
       }
-      const next = [...prev]
-      const insertAt = index >= 0 && index <= prev.length ? index : prev.length
-      next.splice(insertAt, 0, newBlock)
-      setBlocks(next)
-      setIsDirty(true)
-      postToIframe(next)
+
+      if (isTopLevel) {
+        const insertAt = index >= 0 && index <= prev.length ? index : prev.length
+        const next = [...prev]
+        next.splice(insertAt, 0, newBlock)
+        setBlocks(next)
+        setIsDirty(true)
+        postToIframe(next)
+      } else {
+        setIsDirty(true)
+      }
 
       if (addFieldRow) {
         addFieldRow({
           blockType,
           path: targetPath,
-          rowIndex: insertAt,
+          rowIndex: index,
           schemaPath: targetSchemaPath,
         })
       } else if (dispatchFields) {
         dispatchFields({
           type: 'ADD_ROW',
           path: targetPath,
-          rowIndex: insertAt,
+          rowIndex: index,
           blockType,
         })
       }
@@ -326,7 +364,7 @@ export const IsolatedDraftProvider: React.FC<IsolatedDraftProviderProps> = ({
         setModified(true)
       }
     },
-    [blocksField, addFieldRow, dispatchFields, setModified, postToIframe],
+    [blocksField, addFieldRow, dispatchFields, setModified, postToIframe, formState],
   )
 
   const save = useCallback(
