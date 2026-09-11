@@ -137,28 +137,11 @@ export const IsolatedDraftProvider: React.FC<IsolatedDraftProviderProps> = ({
     [iframeRef, url, formState, id, blocksField, collectionSlug, globalSlug, locale],
   )
 
-  // Initialize from formState whenever formState loads or updates
-  useEffect(() => {
-    if (!formState) return
-    const values = reduceFieldsToValues(formState, true)
-    const currentBlocks = values[blocksField]
-    if (Array.isArray(currentBlocks)) {
-      if (!initializedRef.current) {
-        setBlocks(currentBlocks)
-        initializedRef.current = true
-        lastPostedValuesRef.current = JSON.stringify(stripSystemFields(values))
-      } else if (blocksRef.current.length === 0 && currentBlocks.length > 0) {
-        setBlocks(currentBlocks)
-        lastPostedValuesRef.current = JSON.stringify(stripSystemFields(values))
-      }
-    }
-  }, [formState, blocksField])
-
   const lastPostedValuesRef = useRef<string>('')
 
-  // Sync field changes from formState into current blocks
+  // Sync field changes and block list from formState into current blocks
   useEffect(() => {
-    if (!initializedRef.current || !formState) return
+    if (!formState) return
 
     const values = reduceFieldsToValues(formState, true)
     const valuesString = JSON.stringify(stripSystemFields(values))
@@ -169,41 +152,22 @@ export const IsolatedDraftProvider: React.FC<IsolatedDraftProviderProps> = ({
       return
     }
 
-    // If values did not change, skip sync
     if (valuesString === lastPostedValuesRef.current) return
+    const isInitial = !initializedRef.current
+    lastPostedValuesRef.current = valuesString
 
     const formBlocks = values[blocksField]
-
-    // Map latest field values from formState by block id
-    const formBlockMap = new Map<string, DraftBlock>()
     if (Array.isArray(formBlocks)) {
-      for (const b of formBlocks) {
-        if (b && b.id) formBlockMap.set(String(b.id), b)
+      setBlocks(formBlocks)
+      if (!isInitial) {
+        setIsDirty(true)
+        if (setModified) {
+          setModified(true)
+        }
+        postToIframe(formBlocks)
+      } else {
+        initializedRef.current = true
       }
-    }
-
-    const currentBlocks = blocksRef.current
-    let hasBlockFieldChange = false
-    const updated = currentBlocks.map((existing) => {
-      const live = formBlockMap.get(String(existing.id))
-      if (live && JSON.stringify(live) !== JSON.stringify(existing)) {
-        hasBlockFieldChange = true
-        return { ...existing, ...live }
-      }
-      return existing
-    })
-
-    lastPostedValuesRef.current = valuesString
-    setIsDirty(true)
-    if (setModified) {
-      setModified(true)
-    }
-
-    if (hasBlockFieldChange) {
-      setBlocks(updated)
-      postToIframe(updated)
-    } else {
-      postToIframe(currentBlocks)
     }
   }, [formState, blocksField, postToIframe, setModified])
 
