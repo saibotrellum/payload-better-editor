@@ -102,20 +102,20 @@ export const useBlockActionMessages = ({
         switch (data.action) {
           case 'move-up':
             if (rowIndex === 0) return
-            commit(() => currentDraft.moveBlock(rowIndex, rowIndex - 1))
+            commit(() => currentDraft.moveBlock(rowIndex, rowIndex - 1, parentPath))
             select(`${parentPath}.${rowIndex - 1}`)
             break
           case 'move-down':
             if (rowIndex >= rowCount - 1) return
-            commit(() => currentDraft.moveBlock(rowIndex, rowIndex + 1))
+            commit(() => currentDraft.moveBlock(rowIndex, rowIndex + 1, parentPath))
             select(`${parentPath}.${rowIndex + 1}`)
             break
           case 'duplicate':
-            commit(() => currentDraft.duplicateBlock(rowIndex))
+            commit(() => currentDraft.duplicateBlock(rowIndex, parentPath))
             select(`${parentPath}.${rowIndex + 1}`)
             break
           case 'delete':
-            commit(() => currentDraft.removeBlock(rowIndex))
+            commit(() => currentDraft.removeBlock(rowIndex, parentPath))
             select(null)
             break
         }

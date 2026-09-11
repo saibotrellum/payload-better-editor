@@ -25,10 +25,10 @@ export type IsolatedDraftContextValue = {
   blocks: DraftBlock[]
   isDirty: boolean
   isSaving: boolean
-  moveBlock: (fromIndex: number, toIndex: number) => void
-  duplicateBlock: (index: number) => void
-  removeBlock: (index: number) => void
-  addBlock: (index: number, blockType: string) => void
+  moveBlock: (fromIndex: number, toIndex: number, parentPath?: string) => void
+  duplicateBlock: (index: number, parentPath?: string) => void
+  removeBlock: (index: number, parentPath?: string) => void
+  addBlock: (index: number, blockType: string, parentPath?: string, schemaPath?: string) => void
   save: (status?: 'draft' | 'published') => Promise<void>
   discard: () => void
 }
@@ -77,7 +77,14 @@ export const IsolatedDraftProvider: React.FC<IsolatedDraftProviderProps> = ({
   const { id } = docInfo
   const { iframeRef, url } = useLivePreviewContext()
   const locale = useLocale()
-  const { submit } = useForm()
+  const {
+    submit,
+    moveFieldRow,
+    removeFieldRow,
+    addFieldRow,
+    dispatchFields,
+    setModified,
+  } = useForm()
 
   const collectionSlug = docInfo.collectionSlug
   const globalSlug = docInfo.globalSlug
@@ -98,43 +105,12 @@ export const IsolatedDraftProvider: React.FC<IsolatedDraftProviderProps> = ({
       const win = frame.contentWindow
       if (!win) return
 
-      // A fresh iframe shows `about:blank` until `src` has navigated, and that
-      // document inherits the ADMIN's origin. Posting with the preview origin as
-      // the target then throws:
-      //
-      //   The target origin ('http://tenant.localhost:5300') does not match the
-      //   recipient window's origin ('http://admin.localhost:5300')
-      //
-      // Same-origin setups never see it, because both origins are equal. It
-      // shows up on a multi-domain admin, where the preview is served from the
-      // tenant host. `usePreviewBinding` already guards the same `about:blank`
-      // window; this is the posting half of it.
-      //
-      // Measured on a multi-domain admin, the iframe passes through two states
-      // before it is ready, and BOTH would throw:
-      //
-      //   hasDoc=true   doc.URL='about:blank'   -> inherited admin origin
-      //   hasDoc=false  contentWindow.origin throws
-      //
-      // The second one is not proof of having reached the target origin - an
-      // about:blank that has begun navigating reports the same way. So neither
-      // document nor window is a reliable witness here.
-      //
-      // `src` cannot tell them apart either - it already names the target in
-      // both. What distinguishes them is whether the window's own origin
-      // matches the target we are about to post to. Reading that origin throws
-      // exactly when it does NOT match, so the two cases collapse into one
-      // check with a single meaning: post only when we can read the window and
-      // its origin equals the target.
       let targetOrigin = '*'
       let ready = false
       try {
         targetOrigin = new URL(url, window.location.origin).origin
         ready = win.location.origin === targetOrigin
       } catch {
-        // Cross-origin read - the iframe has navigated to the tenant and the
-        // admin cannot inspect it. That is the normal, healthy state on a
-        // multi-domain admin, and posting is correct there.
         ready = true
       }
       if (!ready) return
@@ -155,9 +131,7 @@ export const IsolatedDraftProvider: React.FC<IsolatedDraftProviderProps> = ({
           targetOrigin,
         )
       } catch {
-        // The iframe can navigate between the check above and this call. A
-        // dropped frame of preview data is not worth an uncaught error in the
-        // admin console - the next form change posts again.
+        // Iframe navigation catch
       }
     },
     [iframeRef, url, formState, id, blocksField, collectionSlug, globalSlug, locale],
@@ -176,7 +150,7 @@ export const IsolatedDraftProvider: React.FC<IsolatedDraftProviderProps> = ({
 
   const lastPostedValuesRef = useRef<string>('')
 
-  // Sync field changes from formState into current blocks without changing block order
+  // Sync field changes from formState into current blocks
   useEffect(() => {
     if (!initializedRef.current || !formState) return
 
@@ -215,6 +189,9 @@ export const IsolatedDraftProvider: React.FC<IsolatedDraftProviderProps> = ({
 
     lastPostedValuesRef.current = valuesString
     setIsDirty(true)
+    if (setModified) {
+      setModified(true)
+    }
 
     if (hasBlockFieldChange) {
       setBlocks(updated)
@@ -222,10 +199,11 @@ export const IsolatedDraftProvider: React.FC<IsolatedDraftProviderProps> = ({
     } else {
       postToIframe(currentBlocks)
     }
-  }, [formState, blocksField, postToIframe])
+  }, [formState, blocksField, postToIframe, setModified])
 
   const moveBlock = useCallback(
-    (fromIndex: number, toIndex: number) => {
+    (fromIndex: number, toIndex: number, parentPath?: string) => {
+      const targetPath = parentPath || blocksField
       const prev = blocksRef.current
       if (fromIndex < 0 || fromIndex >= prev.length || toIndex < 0 || toIndex >= prev.length) {
         return
@@ -236,12 +214,28 @@ export const IsolatedDraftProvider: React.FC<IsolatedDraftProviderProps> = ({
       setBlocks(next)
       setIsDirty(true)
       postToIframe(next)
+
+      // Synchronisiert die Block-Verschiebung mit dem Payload FormState (wichtig für Gliederungsbaum und Payload-Save-Buttons)
+      if (moveFieldRow) {
+        moveFieldRow({ path: targetPath, moveFromIndex: fromIndex, moveToIndex: toIndex })
+      } else if (dispatchFields) {
+        dispatchFields({
+          type: 'MOVE_ROW',
+          path: targetPath,
+          moveFromIndex: fromIndex,
+          moveToIndex: toIndex,
+        })
+      }
+      if (setModified) {
+        setModified(true)
+      }
     },
-    [postToIframe],
+    [blocksField, moveFieldRow, dispatchFields, setModified, postToIframe],
   )
 
   const duplicateBlock = useCallback(
-    (index: number) => {
+    (index: number, parentPath?: string) => {
+      const targetPath = parentPath || blocksField
       const prev = blocksRef.current
       if (index < 0 || index >= prev.length) return
       const target = prev[index]
@@ -249,21 +243,30 @@ export const IsolatedDraftProvider: React.FC<IsolatedDraftProviderProps> = ({
         ...(JSON.parse(JSON.stringify(target)) as DraftBlock),
         id: generateRowId(),
       }
-      // The copy carries the source row's Mongo `_id`. Left in place, the save
-      // writes two rows claiming the same document id and the second one wins,
-      // so the duplicate silently replaces its original.
       delete duplicated._id
       const next = [...prev]
       next.splice(index + 1, 0, duplicated)
       setBlocks(next)
       setIsDirty(true)
       postToIframe(next)
+
+      if (dispatchFields) {
+        dispatchFields({
+          type: 'DUPLICATE_ROW',
+          path: targetPath,
+          rowIndex: index,
+        })
+      }
+      if (setModified) {
+        setModified(true)
+      }
     },
-    [postToIframe],
+    [blocksField, dispatchFields, setModified, postToIframe],
   )
 
   const removeBlock = useCallback(
-    (index: number) => {
+    (index: number, parentPath?: string) => {
+      const targetPath = parentPath || blocksField
       const prev = blocksRef.current
       if (index < 0 || index >= prev.length) return
       const next = [...prev]
@@ -271,12 +274,27 @@ export const IsolatedDraftProvider: React.FC<IsolatedDraftProviderProps> = ({
       setBlocks(next)
       setIsDirty(true)
       postToIframe(next)
+
+      if (removeFieldRow) {
+        removeFieldRow({ path: targetPath, rowIndex: index })
+      } else if (dispatchFields) {
+        dispatchFields({
+          type: 'REMOVE_ROW',
+          path: targetPath,
+          rowIndex: index,
+        })
+      }
+      if (setModified) {
+        setModified(true)
+      }
     },
-    [postToIframe],
+    [blocksField, removeFieldRow, dispatchFields, setModified, postToIframe],
   )
 
   const addBlock = useCallback(
-    (index: number, blockType: string) => {
+    (index: number, blockType: string, parentPath?: string, schemaPath?: string) => {
+      const targetPath = parentPath || blocksField
+      const targetSchemaPath = schemaPath || blocksField
       const prev = blocksRef.current
       const newBlock = {
         id: generateRowId(),
@@ -288,8 +306,27 @@ export const IsolatedDraftProvider: React.FC<IsolatedDraftProviderProps> = ({
       setBlocks(next)
       setIsDirty(true)
       postToIframe(next)
+
+      if (addFieldRow) {
+        addFieldRow({
+          blockType,
+          path: targetPath,
+          rowIndex: insertAt,
+          schemaPath: targetSchemaPath,
+        })
+      } else if (dispatchFields) {
+        dispatchFields({
+          type: 'ADD_ROW',
+          path: targetPath,
+          rowIndex: insertAt,
+          blockType,
+        })
+      }
+      if (setModified) {
+        setModified(true)
+      }
     },
-    [postToIframe],
+    [blocksField, addFieldRow, dispatchFields, setModified, postToIframe],
   )
 
   const save = useCallback(
@@ -305,6 +342,9 @@ export const IsolatedDraftProvider: React.FC<IsolatedDraftProviderProps> = ({
           })
           justSavedRef.current = true
           setIsDirty(false)
+          if (setModified) {
+            setModified(false)
+          }
         }
       } catch (err) {
         console.error('[better-editor] Save failed:', err)
@@ -313,7 +353,7 @@ export const IsolatedDraftProvider: React.FC<IsolatedDraftProviderProps> = ({
         setIsSaving(false)
       }
     },
-    [submit, blocksField],
+    [submit, blocksField, setModified],
   )
 
   const discard = useCallback(() => {

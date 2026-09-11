@@ -51,16 +51,16 @@ export const useBlockActions = ({
     commit(() => {
       switch (kind) {
         case 'move-up':
-          draft.moveBlock(rowIndex, rowIndex - 1)
+          draft.moveBlock(rowIndex, rowIndex - 1, parentPath)
           break
         case 'move-down':
-          draft.moveBlock(rowIndex, rowIndex + 1)
+          draft.moveBlock(rowIndex, rowIndex + 1, parentPath)
           break
         case 'duplicate':
-          draft.duplicateBlock(rowIndex)
+          draft.duplicateBlock(rowIndex, parentPath)
           break
         case 'remove':
-          draft.removeBlock(rowIndex)
+          draft.removeBlock(rowIndex, parentPath)
           break
       }
     })
@@ -82,6 +82,7 @@ export const useBlockActions = ({
   const addAfter = ({
     blockType,
     containerPath,
+    schemaPath,
     index,
   }: {
     blockType?: string
@@ -90,7 +91,7 @@ export const useBlockActions = ({
     index: number
   }) => {
     commit(() => {
-      draft.addBlock(index, blockType || 'unknown')
+      draft.addBlock(index, blockType || 'unknown', containerPath, schemaPath)
     })
     onSelectPath(`${containerPath}.${index}`)
   }
