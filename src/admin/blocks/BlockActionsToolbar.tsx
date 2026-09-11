@@ -89,7 +89,10 @@ export const BlockActionsToolbar: React.FC<BlockActionsToolbarProps> = ({
         tabIndex={tabIndexFor(1)}
         onFocus={onFocus(1)}
         className="better-editor-tab__action"
-        onClick={onMoveDown}
+        onClick={() => {
+          console.log('[BlockActionsToolbar] onClick onMoveDown fired!')
+          onMoveDown()
+        }}
         disabled={!canMoveDown}
         title={t.blocks.actions.moveDown}
         aria-label={t.blocks.actions.moveDownLabel}

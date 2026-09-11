@@ -42,21 +42,27 @@ export const useBlockActions = ({
   const canMoveUp = canMutate && rowIndex > 0
   const canMoveDown = canMutate && rowIndex < rowCount - 1
 
-  // Re-check bounds at call time: form state may have shifted between
-  // render and click (e.g. another action just removed the row).
   const runRowAction = (
     kind: 'move-up' | 'move-down' | 'duplicate' | 'remove',
   ): void => {
+    console.log('[useBlockActions runRowAction]', { kind, canMoveUp, canMoveDown, canMutate, rowIndex, rowCount, parentPath, selectedBlockPath })
     if (kind === 'move-up' && !canMoveUp) return
     if (kind === 'move-down' && !canMoveDown) return
     if ((kind === 'duplicate' || kind === 'remove') && !canMutate) return
     const liveCount = (isTopLevel && draft.blocks.length > 0)
       ? draft.blocks.length
       : (parentPath ? rowCountAt(fields, parentPath) : (draft.blocks.length || 0))
-    if (rowIndex >= liveCount) return
-    if (kind === 'move-down' && rowIndex >= liveCount - 1) return
+    if (rowIndex >= liveCount) {
+      console.log('[useBlockActions runRowAction] early return: rowIndex >= liveCount', rowIndex, liveCount)
+      return
+    }
+    if (kind === 'move-down' && rowIndex >= liveCount - 1) {
+      console.log('[useBlockActions runRowAction] early return: rowIndex >= liveCount - 1', rowIndex, liveCount)
+      return
+    }
 
     commit(() => {
+      console.log('[useBlockActions runRowAction] committing mutation', kind)
       switch (kind) {
         case 'move-up':
           draft.moveBlock(rowIndex, rowIndex - 1, parentPath)
