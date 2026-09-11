@@ -15,8 +15,11 @@ const rowCountAt = (
   fields: ReturnType<typeof useAllFormFields>[0],
   path: string,
 ): number => {
-  const rows = fields[path]?.rows
-  return Array.isArray(rows) ? rows.length : 0
+  const field = fields[path]
+  if (field && Array.isArray(field.rows)) return field.rows.length
+  if (field && typeof field.value === 'number') return field.value
+  if (field && Array.isArray(field.value)) return field.value.length
+  return 0
 }
 
 export const useBlockActions = ({
@@ -31,7 +34,10 @@ export const useBlockActions = ({
   const split = selectedBlockPath ? splitFieldPath(selectedBlockPath) : null
   const parentPath = split?.parent ?? ''
   const rowIndex = split ? split.index : NaN
-  const rowCount = draft.blocks.length > 0 ? draft.blocks.length : (parentPath ? rowCountAt(fields, parentPath) : 0)
+  const isTopLevel = parentPath === 'layout' || parentPath === ''
+  const rowCount = (isTopLevel && draft.blocks.length > 0)
+    ? draft.blocks.length
+    : (parentPath ? rowCountAt(fields, parentPath) : (draft.blocks.length || 0))
   const canMutate = !Number.isNaN(rowIndex) && parentPath !== '' && rowIndex < rowCount
   const canMoveUp = canMutate && rowIndex > 0
   const canMoveDown = canMutate && rowIndex < rowCount - 1
@@ -44,7 +50,9 @@ export const useBlockActions = ({
     if (kind === 'move-up' && !canMoveUp) return
     if (kind === 'move-down' && !canMoveDown) return
     if ((kind === 'duplicate' || kind === 'remove') && !canMutate) return
-    const liveCount = draft.blocks.length > 0 ? draft.blocks.length : rowCountAt(fields, parentPath)
+    const liveCount = (isTopLevel && draft.blocks.length > 0)
+      ? draft.blocks.length
+      : (parentPath ? rowCountAt(fields, parentPath) : (draft.blocks.length || 0))
     if (rowIndex >= liveCount) return
     if (kind === 'move-down' && rowIndex >= liveCount - 1) return
 
