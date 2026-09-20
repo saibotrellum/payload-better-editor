@@ -1,0 +1,96 @@
+# Packs the integration branch into an installable tarball.
+#
+# Our own projects consume this fork rather than the npm package, and they must
+# not build it: a git dependency drags the plugin's ~100 devDependencies into
+# every image and runs a compile in an environment nobody watches. This job does
+# that compile once, here, where the log is readable, and publishes the result.
+#
+# Nothing is published unless lint, tests and the build all pass, so a red
+# integration branch cannot reach a deployment.
+name: Release integration
+
+on:
+  push:
+    branches: [integration]
+  workflow_dispatch:
+
+concurrency:
+  group: release-integration
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  release:
+    name: pack and publish
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: 'https://registry.npmjs.org'
+
+      # Trusted publishing needs npm >= 11.5.1; Node 22 still ships npm 10.9.8,
+      # which knows nothing about OIDC. It falls back to a plain token PUT, and
+      # the registry answers `404 Not Found - PUT .../@saibotrellum%2f...` - a
+      # permissions error wearing a "package does not exist" costume, on a
+      # package that plainly does exist. The provenance statement is signed and
+      # logged before that point, which makes the run look even more like it
+      # should have worked.
+      - run: npm install -g npm@latest
+      - run: pnpm install --frozen-lockfile=false
+
+      # The gate. Same three checks CI runs, repeated here so this job is
+      # self-contained: a workflow that trusts another workflow's result can
+      # publish from a commit whose CI never finished.
+      - run: pnpm lint
+      - run: pnpm test
+      - run: pnpm clean && pnpm build
+
+      - name: Publish to npm
+        run: |
+          CURRENT_VER=$(node -p "require('./package.json').version")
+          if npm view @saibotrellum/payload-better-editor@$CURRENT_VER version >/dev/null 2>&1; then
+            echo "Version $CURRENT_VER already published to npm, skipping."
+          else
+            echo "Publishing @saibotrellum/payload-better-editor@$CURRENT_VER via Trusted Publishing..."
+            npm publish --access public --provenance
+          fi
+
+      - name: Pack
+        id: pack
+        run: |
+          # The version in package.json tracks the upstream release this fork
+          # sits on, so it repeats across builds and cannot name a release on
+          # its own. The run number is what makes each one distinct and ordered.
+          BASE=$(node -p "require('./package.json').version")
+          TAG="integration-${BASE}-${{ github.run_number }}"
+          pnpm pack --pack-destination /tmp
+          # `pnpm pack` names the file from package.json, not from our tag.
+          mv /tmp/*payload-better-editor-*.tgz "/tmp/${TAG}.tgz"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "file=/tmp/${TAG}.tgz" >> "$GITHUB_OUTPUT"
+          tar -tzf "/tmp/${TAG}.tgz" | sort
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${{ steps.pack.outputs.tag }}" \
+            "${{ steps.pack.outputs.file }}" \
+            --title "${{ steps.pack.outputs.tag }}" \
+            --notes "Built from \`integration\` at ${{ github.sha }}.
+
+          Not an upstream release. This is the build our own projects install;
+          the version number names the upstream release this fork sits on.
+
+          \`\`\`
+          ${{ github.event.head_commit.message }}
+          \`\`\`" \
+            --latest

@@ -24,9 +24,9 @@ export function isIntentionalRemoval(): boolean {
   return Date.now() < intentionalRemovalUntil
 }
 
-function getRowCount(fields: Record<string, any> | undefined, blocksField: string): number {
+function getRowCount(fields: FormState | Record<string, unknown> | undefined, blocksField: string): number {
   if (!fields) return 0
-  const field = fields[blocksField]
+  const field = fields[blocksField] as { rows?: unknown[] } | undefined
   if (field && Array.isArray(field.rows)) {
     return field.rows.length
   }
@@ -72,15 +72,15 @@ export function BlockRollbackGuard({ blocksField }: BlockRollbackGuardProps): nu
     const origDispatch = form.dispatchFields
     const origReplaceState = form.replaceState
 
-    form.dispatchFields = (action: any) => {
-      if (action?.type === 'REMOVE_ROW') {
+    form.dispatchFields = (action: Parameters<typeof origDispatch>[0]) => {
+      if ((action as { type?: string })?.type === 'REMOVE_ROW') {
         markIntentionalRemoval(2000)
       }
 
-      if (action?.type === 'REPLACE_STATE' && action.state) {
+      if ((action as { type?: string; state?: FormState })?.type === 'REPLACE_STATE' && (action as { state?: FormState }).state) {
         const held = claim.current
         if (held && Date.now() - held.at < CLAIM_TTL_MS && !isIntentionalRemoval()) {
-          const incoming = getRowCount(action.state, blocksField)
+          const incoming = getRowCount((action as { state: FormState }).state, blocksField)
           if (incoming < held.count) {
             console.warn(
               `[better-editor] Blocked late REPLACE_STATE dropping ${blocksField} rows from ${held.count} to ${incoming}`,
@@ -92,7 +92,7 @@ export function BlockRollbackGuard({ blocksField }: BlockRollbackGuardProps): nu
       return origDispatch ? origDispatch(action) : undefined
     }
 
-    form.replaceState = (state: any) => {
+    form.replaceState = (state: FormState) => {
       const held = claim.current
       if (held && Date.now() - held.at < CLAIM_TTL_MS && !isIntentionalRemoval()) {
         const incoming = getRowCount(state, blocksField)
