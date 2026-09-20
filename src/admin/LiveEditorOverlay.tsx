@@ -1,7 +1,6 @@
 'use client'
 
 import React, { useCallback, useRef, useState } from 'react'
-import { useLivePreviewContext } from '@payloadcms/ui'
 import { PreviewFrame } from './PreviewFrame.js'
 import { PreviewToolbar } from './PreviewToolbar.js'
 import { Sidebar } from './sidebar/Sidebar.js'
@@ -13,6 +12,7 @@ import { useFullscreenOverlay } from '../hooks/useFullscreenOverlay.js'
 import { useBlockActionMessages } from '../hooks/useBlockActionMessages.js'
 import { useOverlayKeyboard } from '../hooks/useOverlayKeyboard.js'
 import { useFocusTrap } from '../hooks/useFocusTrap.js'
+import { useStablePreviewURL } from '../hooks/useStablePreviewURL.js'
 import { OverlayProviders } from '../providers/OverlayProviders.js'
 import { useBetterEditorT } from '../i18n/useBetterEditorT.js'
 import { resolveSelectionState } from './resolveSelectionState.js'
@@ -101,7 +101,11 @@ const LiveEditorOverlayInner: React.FC<InnerProps> = ({
   const t = useBetterEditorT()
   const settings = useBetterEditorSettings()
   const history = useEditorHistory()
-  const { previewURL } = useLivePreviewContext()
+  // Stabilised, not the raw context value: Payload blanks `previewURL` after
+  // every save while the next one resolves, and feeding that straight into the
+  // iframe `src` reloads the preview and re-raises PreviewFrame's skeleton
+  // (PreviewFrame.tsx useEffect on `previewURL`).
+  const previewURL = useStablePreviewURL()
 
   const { sidebarWidth, isResizing, onResizeStart, onResizeKeyDown } = useSidebarResize(
     settings.sidebarPosition,

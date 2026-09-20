@@ -7,6 +7,7 @@ import { splitFieldPath } from '../internal/path.js'
 import type { FormState } from 'payload'
 import { useEditorHistory } from '../state/useEditorHistory.js'
 import { useLatestRef } from './useLatestRef.js'
+import { markIntentionalRemoval } from '../admin/blocks/BlockRollbackGuard.js'
 
 const ID_SUFFIX = '.id'
 
@@ -113,6 +114,7 @@ export const useBlockActionMessages = ({
             select(`${parentPath}.${rowIndex + 1}`)
             break
           case 'delete':
+            markIntentionalRemoval()
             commit(() => dispatch({ type: 'REMOVE_ROW', path: parentPath, rowIndex }))
             select(null)
             break

@@ -13,6 +13,14 @@ export type UsePreviewSelectionSyncArgs = {
   selectedBlockPath: string | null
   interactMode: boolean
   previewURL: string | undefined
+  /**
+   * Bumped by usePreviewBinding on every iframe (re-)bind. A reload builds a
+   * brand-new HoverToolbarController whose `currentBlockId` is empty, so the
+   * selection has to be re-applied against it - otherwise the toolbar of a
+   * freshly added or duplicated block never appears, because the block only
+   * enters the preview DOM with that very reload.
+   */
+  bindToken?: number
 }
 
 /**
@@ -26,6 +34,7 @@ export const usePreviewSelectionSync = ({
   selectedBlockPath,
   interactMode,
   previewURL,
+  bindToken,
 }: UsePreviewSelectionSyncArgs): void => {
   const { mostRecentUpdate } = useDocumentEvents()
   const { id } = useDocumentInfo()
@@ -79,5 +88,5 @@ export const usePreviewSelectionSync = ({
     return () => {
       if (raf !== undefined) view?.cancelAnimationFrame(raf)
     }
-  }, [iframeRef, controllerRef, selectedBlockId, mutationToken, interactMode])
+  }, [iframeRef, controllerRef, selectedBlockId, mutationToken, interactMode, bindToken])
 }

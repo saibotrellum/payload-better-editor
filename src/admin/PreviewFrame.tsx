@@ -88,7 +88,7 @@ export const PreviewFrame = React.memo(function PreviewFrame({
     ],
   )
 
-  const { controllerRef, isBoundRef } = usePreviewBinding({
+  const { controllerRef, isBoundRef, bindToken } = usePreviewBinding({
     iframeRef,
     settings,
     interactModeRef,
@@ -111,6 +111,7 @@ export const PreviewFrame = React.memo(function PreviewFrame({
     selectedBlockPath,
     interactMode,
     previewURL,
+    bindToken,
   })
 
   const constrained = typeof viewportWidth === 'number' && viewportWidth > 0

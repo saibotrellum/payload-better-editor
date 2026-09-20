@@ -3,6 +3,7 @@
 import { useAllFormFields, useForm } from '@payloadcms/ui'
 import { useEditorHistory } from '../../state/useEditorHistory.js'
 import { splitFieldPath } from '../../internal/path.js'
+import { markIntentionalRemoval } from './BlockRollbackGuard.js'
 
 type Args = {
   selectedBlockPath: string | null
@@ -68,6 +69,7 @@ export const useBlockActions = ({
           dispatchFields({ type: 'DUPLICATE_ROW', path: parentPath, rowIndex })
           break
         case 'remove':
+          markIntentionalRemoval()
           dispatchFields({ type: 'REMOVE_ROW', path: parentPath, rowIndex })
           break
       }

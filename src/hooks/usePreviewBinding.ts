@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, type RefObject } from 'react'
+import { useCallback, useEffect, useRef, type RefObject, useState } from 'react'
 import { HoverToolbarController, toHoverToolbarLabels } from '../preview/HoverToolbarController.js'
 import { useBetterEditorT } from '../i18n/useBetterEditorT.js'
 import { installClickToFocus } from '../preview/installClickToFocus.js'
@@ -30,6 +30,13 @@ export type UsePreviewBindingArgs = {
 export type UsePreviewBindingReturn = {
   controllerRef: RefObject<HoverToolbarController | null>
   isBoundRef: RefObject<boolean>
+  /**
+   * Increments every time the iframe document is (re-)bound, i.e. after every
+   * preview reload. Consumers that hold iframe-side state - the current
+   * selection, above all - depend on this to re-apply it against the new
+   * controller, which starts out empty.
+   */
+  bindToken: number
 }
 
 /**
@@ -50,6 +57,7 @@ export const usePreviewBinding = ({
   const teardownRef = useRef<(() => void) | null>(null)
   const controllerRef = useRef<HoverToolbarController | null>(null)
   const isBoundRef = useRef(false)
+  const [bindToken, setBindToken] = useState(0)
   // One-shot flags so dev-only console warnings don't repeat on every
   // iframe re-load during a single editor session.
   const warnedMissingBlocksRef = useRef(false)
@@ -100,6 +108,9 @@ export const usePreviewBinding = ({
       }
 
       isBoundRef.current = true
+      // A reload replaced the controller, so whatever was selected is no longer
+      // marked in the iframe. Tell consumers to re-apply it.
+      setBindToken((n) => n + 1)
       teardownRef.current = () => {
         removeStyles()
         removeClick()
@@ -156,5 +167,5 @@ export const usePreviewBinding = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- refs are stable
   }, [])
 
-  return { controllerRef, isBoundRef }
+  return { controllerRef, isBoundRef, bindToken }
 }

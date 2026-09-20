@@ -2,9 +2,10 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { useDocumentInfo, useLivePreviewContext, usePreferences } from '@payloadcms/ui'
+import { useDocumentInfo, usePreferences } from '@payloadcms/ui'
 import { LiveEditorOverlay } from './LiveEditorOverlay.js'
 import { useMainWrapperPortal } from '../hooks/useMainWrapperPortal.js'
+import { useStablePreviewURL } from '../hooks/useStablePreviewURL.js'
 import { buildStorageKeys } from '../internal/storage-keys.js'
 import { resolveInitialOpen } from './resolveInitialOpen.js'
 import { LayoutIcon } from './icons.js'
@@ -13,6 +14,7 @@ import {
   BlockSelectionProvider,
   useBlockSelection,
 } from '../providers/BlockSelectionProvider.js'
+import { BlockRollbackGuard } from './blocks/BlockRollbackGuard.js'
 import '../styles/toggle.css'
 
 type Pref = { open?: boolean }
@@ -37,6 +39,7 @@ export const LiveEditorToggle: React.FC<LiveEditorToggleProps> = (props) => (
   // own navigation UI shares this selection; otherwise it owns the state
   // itself and the overlay behaves exactly as it did before.
   <BlockSelectionProvider>
+    <BlockRollbackGuard blocksField={props.blocksField} />
     <LiveEditorToggleInner {...props} />
   </BlockSelectionProvider>
 )
@@ -54,7 +57,7 @@ const LiveEditorToggleInner: React.FC<LiveEditorToggleProps> = ({
   // flashing the closed state until the preference read resolves.
   const [open, setOpen] = useState(() => resolveInitialOpen(undefined, defaultOpen))
   const { collectionSlug, globalSlug } = useDocumentInfo()
-  const { previewURL } = useLivePreviewContext()
+  const previewURL = useStablePreviewURL()
   const { getPreference, setPreference } = usePreferences()
   const storageKeys = useMemo(() => buildStorageKeys(storageNamespace), [storageNamespace])
   const prefKey = storageKeys.togglePreference(collectionSlug, globalSlug)
@@ -63,10 +66,15 @@ const LiveEditorToggleInner: React.FC<LiveEditorToggleProps> = ({
   // can't fire with the initial `false` before the read resolves, and so
   // switching documents reseeds without clobbering the new doc's pref.
   const hydratedKeyRef = useRef<string | null>(null)
+  const prevPrefKeyRef = useRef(prefKey)
+  if (prevPrefKeyRef.current !== prefKey) {
+    prevPrefKeyRef.current = prefKey
+    hydratedKeyRef.current = null
+  }
 
   useEffect(() => {
+    if (hydratedKeyRef.current === prefKey) return
     let cancelled = false
-    hydratedKeyRef.current = null
     void getPreference<Pref>(prefKey).then((pref) => {
       if (cancelled) return
       hydratedKeyRef.current = prefKey
@@ -92,13 +100,15 @@ const LiveEditorToggleInner: React.FC<LiveEditorToggleProps> = ({
   const t = useBetterEditorT()
   const label = open ? t.toggle.close : t.toggle.open
 
-  // Mirror Payload's official live-preview behaviour: only surface the
-  // toggle once a previewURL is actually resolvable (collection has
-  // `admin.livePreview.url` configured AND the document has the data
-  // the URL function depends on, e.g. slug). Hiding the button avoids
-  // the misleading "Loading preview URL…" / "not configured" empty
-  // states inside the overlay entirely.
-  if (!previewURL) return null
+  // Hide the toggle only while NO preview URL has ever resolved - a collection
+  // without `admin.preview`, or a document still missing the data the callback
+  // needs. `useStablePreviewURL` absorbs the mid-session blanks that Payload
+  // pushes after every save; gating on the raw context value here would
+  // unmount the overlay subtree, iframe included, on each one.
+  //
+  // The second half of the guard is the load-bearing part: once the editor is
+  // open, nothing tears the iframe down.
+  if (!previewURL && !open) return null
 
   return (
     <>
