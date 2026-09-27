@@ -1,9 +1,16 @@
-import type { CollectionSlug, GlobalSlug } from 'payload'
+import type { CollectionSlug, GlobalConfig, GlobalSlug } from 'payload'
 
 /** Per-entity overrides for a collection/global. */
 export type BetterEditorEntityOptions = {
   /** Blocks-field name for this entity; falls back to the top-level `blocksField`. */
   blocksField?: string
+  /**
+   * Open the editor automatically for users who have not toggled it yet on
+   * this entity. Once a user opens or closes it, their saved preference wins.
+   * The editor still only appears once a preview URL resolves (e.g. after a
+   * new document's slug is saved). Defaults to `false`.
+   */
+  defaultOpen?: boolean
 }
 
 export type BetterEditorConfig = {
@@ -55,15 +62,19 @@ export type BetterEditorConfig = {
    */
   hideToggleLabel?: boolean
   /**
-   * Open the side-by-side editor as soon as a document is opened, instead of
-   * waiting for the editor to switch it on.
+   * Customize the auto-registered `BetterEditorSettings` global, e.g. to
+   * restrict its access. Receives the plugin's global and returns the one to
+   * register. Without it, the global keeps its permissive defaults: public
+   * `read` and `update` for any logged-in user.
    *
-   * The state is per document, not remembered: closing the overlay applies to
-   * the document at hand, and the next one opens with it showing again. That
-   * is deliberate - a remembered close would turn one dismissal into a
-   * permanent opt-out, which is what this option exists to replace.
-   *
-   * Defaults to `false`, so an existing install behaves exactly as before.
+   * @example
+   *   settingsOverrides: ({ defaultGlobal }) => ({
+   *     ...defaultGlobal,
+   *     access: {
+   *       read: ({ req }) => Boolean(req.user),
+   *       update: ({ req }) => req.user?.role === 'admin',
+   *     },
+   *   })
    */
-  defaultOpen?: boolean
+  settingsOverrides?: (args: { defaultGlobal: GlobalConfig }) => GlobalConfig
 }

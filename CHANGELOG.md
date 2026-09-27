@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org).
 
+## [1.5.0]
+### Added
+- `defaultOpen` per collection/global (`collections: { pages: { defaultOpen: true } }`) opens the editor automatically for users who haven't toggled it yet. A user's saved open/closed choice still wins. Off by default, so existing setups are unchanged.
+- `settingsOverrides` plugin option to customize the auto-registered `BetterEditorSettings` global, e.g. to restrict its access. Without it, access stays as before.
+- A startup warning when the settings global still uses its permissive default access (public `read`, `update` for any logged-in user).
+### Changed
+- **Breaking for 1.4.12 users:** the plugin-level `defaultOpen` option from 1.4.12 is replaced by the per-collection/global form above, and a saved open/closed choice now wins over it. Move `betterEditor({ defaultOpen: true, collections: ['pages'] })` to `betterEditor({ collections: { pages: { defaultOpen: true } } })`.
+- The toggle now saves its open/closed preference only when the user clicks it, not when the state is restored on load.
+
 ## [1.4.12]
 ### Added
 - `useBlockSelection` and `BlockSelectionProvider`, exported from `payload-better-editor/client`, let a consumer's own admin components read and drive the block the sidebar edits. Registering the provider in `admin.components.providers` is what makes it reach the toggle: Payload renders slot components as siblings, so a provider wrapped around your own panel sits beside the toggle rather than above it. The hook is inert without the provider, so it is safe to call unconditionally. See "Consumer API: block selection" in DEVELOPERS.md.

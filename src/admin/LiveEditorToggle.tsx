@@ -24,7 +24,7 @@ export type LiveEditorToggleProps = {
   adminPortalSelector?: string
   storageNamespace?: string
   hideToggleLabel?: boolean
-  /** Open the overlay on arrival at every document. See `defaultOpen` in types.ts. */
+  /** Initial state for users without a saved preference for this entity. */
   defaultOpen?: boolean
 }
 
@@ -49,7 +49,7 @@ const LiveEditorToggleInner: React.FC<LiveEditorToggleProps> = ({
   adminPortalSelector,
   storageNamespace,
   hideToggleLabel,
-  defaultOpen,
+  defaultOpen = false,
 }) => {
   const { selectedBlockPath, setSelectedBlockPath } = useBlockSelection()
   // Starts from the configured default rather than a hardcoded `false`, so the
@@ -62,9 +62,9 @@ const LiveEditorToggleInner: React.FC<LiveEditorToggleProps> = ({
   const storageKeys = useMemo(() => buildStorageKeys(storageNamespace), [storageNamespace])
   const prefKey = storageKeys.togglePreference(collectionSlug, globalSlug)
 
-  // Tracks the prefKey we've successfully hydrated against so persistence
-  // can't fire with the initial `false` before the read resolves, and so
-  // switching documents reseeds without clobbering the new doc's pref.
+  // Tracks the prefKey we've successfully hydrated against so a toggle
+  // before the read resolves isn't persisted, and so switching documents
+  // reseeds without clobbering the new doc's pref.
   const hydratedKeyRef = useRef<string | null>(null)
   const prevPrefKeyRef = useRef(prefKey)
   if (prevPrefKeyRef.current !== prefKey) {
@@ -78,9 +78,7 @@ const LiveEditorToggleInner: React.FC<LiveEditorToggleProps> = ({
     void getPreference<Pref>(prefKey).then((pref) => {
       if (cancelled) return
       hydratedKeyRef.current = prefKey
-      // `resolveInitialOpen` ignores the stored value when `defaultOpen` is
-      // set: the overlay is a per-document state there, so a close on one
-      // document must not follow the editor to the next.
+      // A saved choice (open or closed) always wins over the configured default.
       setOpen(resolveInitialOpen(pref, defaultOpen))
     })
     return () => {
@@ -88,13 +86,25 @@ const LiveEditorToggleInner: React.FC<LiveEditorToggleProps> = ({
     }
   }, [prefKey, getPreference, defaultOpen])
 
-  useEffect(() => {
-    if (hydratedKeyRef.current !== prefKey) return
-    void setPreference<Pref>(prefKey, { open }, true)
-  }, [open, prefKey, setPreference])
+  // Persist only explicit user actions, so a state seeded from `defaultOpen`
+  // never becomes a saved preference and later config changes still apply.
+  const persist = useCallback(
+    (next: boolean) => {
+      if (hydratedKeyRef.current !== prefKey) return
+      void setPreference<Pref>(prefKey, { open: next }, true)
+    },
+    [prefKey, setPreference],
+  )
 
-  const handleToggle = useCallback(() => setOpen((v) => !v), [])
-  const handleClose = useCallback(() => setOpen(false), [])
+  const handleToggle = useCallback(() => {
+    const next = !open
+    setOpen(next)
+    persist(next)
+  }, [open, persist])
+  const handleClose = useCallback(() => {
+    setOpen(false)
+    persist(false)
+  }, [persist])
 
   const mountNode = useMainWrapperPortal(open, adminPortalSelector)
   const t = useBetterEditorT()
