@@ -64,8 +64,9 @@ export type BetterEditorConfig = {
   /**
    * Customize the auto-registered `BetterEditorSettings` global, e.g. to
    * restrict its access. Receives the plugin's global and returns the one to
-   * register. Without it, the global keeps its permissive defaults: public
-   * `read` and `update` for any logged-in user.
+   * register. Without it, the global keeps its defaults: `read` for logged-in
+   * users, `update` for users whose `roles` list contains `admin` (any
+   * logged-in user when the user record has no roles list).
    *
    * @example
    *   settingsOverrides: ({ defaultGlobal }) => ({

@@ -149,17 +149,15 @@ export const betterEditor =
       ? existingGlobals
       : [...existingGlobals, settingsGlobal]
 
-    const permissiveAccess = findPermissiveSettingsAccess(ownSettingsGlobal ?? settingsGlobal)
+    const permissiveAccess = findPermissiveSettingsAccess(ownSettingsGlobal ?? settingsGlobal, config)
     if (permissiveAccess.length > 0 && !warnedPermissiveSettingsAccess) {
       warnedPermissiveSettingsAccess = true
       const details = permissiveAccess
-        .map((op) =>
-          op === 'read' ? 'anyone can read it (no login required)' : 'any logged-in user can update it',
-        )
+        .map(() => 'any logged-in user can update it (the user collection has no `roles` field)')
         .join(', ')
 
       console.warn(
-        `[better-editor] the "${BETTER_EDITOR_SETTINGS_SLUG}" global uses permissive default access: ${details}. Restrict it via the \`settingsOverrides\` plugin option — see "Access control" in DEVELOPERS.md.`,
+        `[better-editor] the "${BETTER_EDITOR_SETTINGS_SLUG}" global falls back to permissive access: ${details}. Restrict it via the \`settingsOverrides\` plugin option — see "Access control" in DEVELOPERS.md.`,
       )
     }
 

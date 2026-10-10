@@ -101,7 +101,7 @@ Passed to `betterEditor({ … })`:
 | `storageNamespace` | `string` | `'better-editor'` | Prefix for `localStorage` keys (sidebar width, responsive viewport width) and for the toggle's open/closed Payload preference. Set if multiple instances on the same origin would otherwise collide. |
 | `showSettingsBanner` | `boolean` | `true` | Show the plugin info banner (version, GitHub links) at the top of the `BetterEditorSettings` global. Set to `false` to hide it from end users. |
 | `hideToggleLabel` | `boolean` | `false` | Hide the "Open/Close Better Editor" text next to the toggle button's icon, leaving an icon-only button. The accessible `aria-label`/`title` is kept either way. |
-| `settingsOverrides` | `({ defaultGlobal }) => GlobalConfig` | — | Customize the auto-registered `BetterEditorSettings` global, e.g. its access control. The slug is kept fixed. See [Access control](#access-control). |
+| `settingsOverrides` | `({ defaultGlobal }) => GlobalConfig` | — | Customize the auto-registered `BetterEditorSettings` global, e.g. its access control. The slug is kept fixed. Without it, `read` needs a login and `update` needs the `admin` role (any logged-in user if users have no `roles` list). See [Access control](#access-control). |
 
 ### Open the editor by default
 
@@ -289,9 +289,16 @@ The plugin source lives under `src/` with the following top-level split:
 
 ## Access control
 
-By default the auto-registered `BetterEditorSettings` global is permissive: `read` is public (`() => true`, no login required) and `update` falls back to Payload's default, which allows **any logged-in user**. The values are cosmetic (colours, viewport widths, sidebar position), but in projects with several user roles you usually want only admins to change them. The plugin logs a warning at startup while either operation is still on its default.
+The auto-registered `BetterEditorSettings` global is protected by default, so most projects need no override:
 
-Restrict access with `settingsOverrides`:
+| Operation | Default |
+|---|---|
+| `read` | Logged-in users only. Anonymous requests are denied. |
+| `update` | Users whose `roles` list contains `admin`. A user record without a `roles` array falls back to **any logged-in user**, so projects with another role model are not locked out. |
+
+The plugin logs a warning at startup only for that fallback: the default `update` is in effect and the admin user collection has no `roles` field (or `update` is left unset, which Payload opens to any logged-in user). Setting an operation explicitly, even to `() => true`, silences the warning.
+
+For a different role model, replace the defaults with `settingsOverrides`:
 
 ```ts
 betterEditor({
@@ -306,7 +313,7 @@ betterEditor({
 })
 ```
 
-The editor overlay reads the global from the admin panel with the user's session, so `read` only needs to allow users who can open the editor. Setting an operation explicitly, even to `() => true`, silences the warning for it.
+The editor overlay reads the global from the admin panel with the user's session, so `read` only needs to allow users who can open the editor.
 
 ### Shipping your own settings global
 
@@ -329,7 +336,7 @@ export default buildConfig({
 })
 ```
 
-The startup warning checks your own global too. Here an unset `read` counts as restricted, since Payload then only allows logged-in users.
+The startup warning checks your own global too. An unset `read` counts as restricted, since Payload then only allows logged-in users; an unset `update` is flagged, since Payload then allows any logged-in user.
 
 Do not add sensitive fields to `BetterEditorSettings` without tightening the read access first.
 
