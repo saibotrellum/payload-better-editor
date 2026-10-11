@@ -101,7 +101,7 @@ export const DraftPrompt: React.FC = () => {
       reportUpdate({
         id,
         doc: json.doc,
-        entitySlug: collectionSlug,
+        entitySlug: collectionSlug as string,
         operation: 'update',
         updatedAt: json.doc?.updatedAt ?? new Date().toISOString(),
       })
