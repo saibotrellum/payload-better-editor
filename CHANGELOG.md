@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com),
 and this project adheres to [Semantic Versioning](https://semver.org).
 
+## [Unreleased]
+### Added
+- `draftPrompt` per collection (`collections: { pages: { draftPrompt: true } }`) asks, when a document with a published version and a newer draft opens, whether to continue the draft or restore the published version through Payload's revert-to-published. Asks on every open, in the 15 shipped locales. Off by default.
+### Changed
+- The auto-registered `BetterEditorSettings` global is now protected by default: `read` needs a login, and `update` needs the `admin` role when users have a `roles` list (any logged-in user otherwise). Projects that restricted access through `settingsOverrides` are unaffected; most no longer need the override.
+- The startup access warning fires only for the fallback case (no `roles` field on the user collection, or an unset `update`), not for the new defaults.
+
 ## [1.5.0]
 ### Added
 - `defaultOpen` per collection/global (`collections: { pages: { defaultOpen: true } }`) opens the editor automatically for users who haven't toggled it yet. A user's saved open/closed choice still wins. Off by default, so existing setups are unchanged.

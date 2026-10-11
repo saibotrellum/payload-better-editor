@@ -76,6 +76,15 @@ export const cs: BetterEditorTranslations = {
     resizeLeft: 'Změnit velikost náhledu zleva',
     resizeRight: 'Změnit velikost náhledu zprava',
   },
+  draftPrompt: {
+    title: 'Existuje novější koncept',
+    body: 'Tento dokument má novější nepublikované změny. Jak chcete pokračovat?',
+    continue: 'Pokračovat v úpravách konceptu',
+    restore: 'Obnovit publikovanou verzi',
+    restoring: 'Obnovuji…',
+    versionsHint: 'Zahozený koncept zůstane dostupný ve verzích.',
+    error: 'Publikovanou verzi se nepodařilo obnovit.',
+  },
   error: {
     heading: 'Better Editor selhal',
     unknown: 'Neznámá chyba.',

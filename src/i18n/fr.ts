@@ -76,6 +76,15 @@ export const fr: BetterEditorTranslations = {
     resizeLeft: 'Redimensionner l’aperçu depuis la gauche',
     resizeRight: 'Redimensionner l’aperçu depuis la droite',
   },
+  draftPrompt: {
+    title: 'Un brouillon plus récent existe',
+    body: 'Ce document a des modifications plus récentes non publiées. Comment souhaitez-vous continuer ?',
+    continue: 'Continuer à modifier le brouillon',
+    restore: 'Restaurer la version publiée',
+    restoring: 'Restauration…',
+    versionsHint: 'Le brouillon abandonné reste disponible dans les versions.',
+    error: 'Impossible de restaurer la version publiée.',
+  },
   error: {
     heading: 'Better Editor a planté',
     unknown: 'Erreur inconnue.',

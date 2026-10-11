@@ -76,6 +76,15 @@ export const nl: BetterEditorTranslations = {
     resizeLeft: 'Voorbeeld vanaf links vergroten/verkleinen',
     resizeRight: 'Voorbeeld vanaf rechts vergroten/verkleinen',
   },
+  draftPrompt: {
+    title: 'Er bestaat een nieuwere concepttekst',
+    body: 'Dit document heeft nieuwere, niet-gepubliceerde wijzigingen. Hoe wilt u verdergaan?',
+    continue: 'Verder werken aan het concept',
+    restore: 'Gepubliceerde versie herstellen',
+    restoring: 'Herstellen…',
+    versionsHint: 'Het verworpen concept blijft beschikbaar in de versies.',
+    error: 'De gepubliceerde versie kon niet worden hersteld.',
+  },
   error: {
     heading: 'Better Editor is gecrasht',
     unknown: 'Onbekende fout.',

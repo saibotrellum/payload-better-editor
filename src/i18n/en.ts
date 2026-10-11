@@ -75,6 +75,15 @@ export const en: BetterEditorTranslations = {
     resizeLeft: 'Resize preview from left',
     resizeRight: 'Resize preview from right',
   },
+  draftPrompt: {
+    title: 'A newer draft exists',
+    body: 'This document has newer, unpublished changes. How would you like to proceed?',
+    continue: 'Continue editing the draft',
+    restore: 'Restore the published version',
+    restoring: 'Restoring…',
+    versionsHint: 'The discarded draft stays available in the versions.',
+    error: 'Could not restore the published version.',
+  },
   error: {
     heading: 'Better Editor crashed',
     unknown: 'Unknown error.',

@@ -94,14 +94,14 @@ Passed to `betterEditor({ … })`:
 | Option | Type | Default | Description |
 |---|---|---|---|
 | `disabled` | `boolean` | `false` | Disable the plugin entirely |
-| `collections` | `string[]` \| `Record<slug, { blocksField?: string; defaultOpen?: boolean }>` | `[]` | Collection slugs — or a slug → options record for per-collection settings (e.g. a different `blocksField`) — where the toggle should appear |
-| `globals` | `string[]` \| `Record<slug, { blocksField?: string; defaultOpen?: boolean }>` | `[]` | Global slugs, or a slug → options record, where the toggle should appear |
+| `collections` | `string[]` \| `Record<slug, { blocksField?: string; defaultOpen?: boolean; draftPrompt?: boolean }>` | `[]` | Collection slugs — or a slug → options record for per-collection settings (e.g. a different `blocksField`) — where the toggle should appear. `draftPrompt` (default `false`) asks whether to continue a newer draft or restore the published version, see "Ask before continuing a newer draft" |
+| `globals` | `string[]` \| `Record<slug, { blocksField?: string; defaultOpen?: boolean; draftPrompt?: boolean }>` | `[]` | Global slugs, or a slug → options record, where the toggle should appear |
 | `blocksField` | `string` | `'layout'` | Default name of the document field holding the top-level blocks array; per-collection overrides in the `collections`/`globals` record take precedence |
 | `adminPortalSelector` | `string` | Payload `__main-wrapper` | CSS selector for the admin element the overlay portals into. Override only if the default selector breaks against a future Payload version. Falls back to `<main>` then `<body>`. |
 | `storageNamespace` | `string` | `'better-editor'` | Prefix for `localStorage` keys (sidebar width, responsive viewport width) and for the toggle's open/closed Payload preference. Set if multiple instances on the same origin would otherwise collide. |
 | `showSettingsBanner` | `boolean` | `true` | Show the plugin info banner (version, GitHub links) at the top of the `BetterEditorSettings` global. Set to `false` to hide it from end users. |
 | `hideToggleLabel` | `boolean` | `false` | Hide the "Open/Close Better Editor" text next to the toggle button's icon, leaving an icon-only button. The accessible `aria-label`/`title` is kept either way. |
-| `settingsOverrides` | `({ defaultGlobal }) => GlobalConfig` | — | Customize the auto-registered `BetterEditorSettings` global, e.g. its access control. The slug is kept fixed. See [Access control](#access-control). |
+| `settingsOverrides` | `({ defaultGlobal }) => GlobalConfig` | — | Customize the auto-registered `BetterEditorSettings` global, e.g. its access control. The slug is kept fixed. Without it, `read` needs a login and `update` needs the `admin` role (any logged-in user if users have no `roles` list). See [Access control](#access-control). |
 
 ### Open the editor by default
 
@@ -114,6 +114,30 @@ betterEditor({
 ```
 
 Once a user opens or closes the editor, their saved choice wins over the default. The editor still only appears when a preview URL resolves. For a new document whose preview URL depends on a slug, the regular edit view shows until the slug is saved, then the editor opens.
+
+### Ask before continuing a newer draft
+
+A document that has a published version and newer unpublished changes (an autosaved draft) opens straight into the draft, and nothing says that the published page looks different. To ask instead, set `draftPrompt` on the collection:
+
+```ts
+betterEditor({
+  collections: { pages: { defaultOpen: true, draftPrompt: true } },
+})
+```
+
+When such a document opens, a dialog offers two choices, side by side:
+
+- **Continue editing the draft** (left, secondary) closes the dialog and changes nothing.
+- **Restore the published version** (right, primary) does what Payload's own "Revert to published" does: it reads the published document and saves it back as the current one, so the draft is gone.
+
+Details worth knowing:
+
+- Below the buttons a hint says the discarded draft stays available in the document's versions (restoring saves the published version as a new version; the draft version is kept).
+- It asks on every open, with no memory between sessions. It decides once when the document opens, so autosave while typing never raises it mid-edit.
+- It does not ask for a never-published document, when no newer draft exists, or for a user who may not update the document.
+- It shows whether or not the editor overlay is open, and needs no preview URL.
+- Collections only. `draftPrompt` is ignored for globals, and the collection needs `versions.drafts`.
+- Labels live under `draftPrompt` in the translation set (see "Translations").
 
 ### Translations
 
@@ -289,9 +313,16 @@ The plugin source lives under `src/` with the following top-level split:
 
 ## Access control
 
-By default the auto-registered `BetterEditorSettings` global is permissive: `read` is public (`() => true`, no login required) and `update` falls back to Payload's default, which allows **any logged-in user**. The values are cosmetic (colours, viewport widths, sidebar position), but in projects with several user roles you usually want only admins to change them. The plugin logs a warning at startup while either operation is still on its default.
+The auto-registered `BetterEditorSettings` global is protected by default, so most projects need no override:
 
-Restrict access with `settingsOverrides`:
+| Operation | Default |
+|---|---|
+| `read` | Logged-in users only. Anonymous requests are denied. |
+| `update` | Users whose `roles` list contains `admin`. A user record without a `roles` array falls back to **any logged-in user**, so projects with another role model are not locked out. |
+
+The plugin logs a warning at startup only for that fallback: the default `update` is in effect and the admin user collection has no `roles` field (or `update` is left unset, which Payload opens to any logged-in user). Setting an operation explicitly, even to `() => true`, silences the warning.
+
+For a different role model, replace the defaults with `settingsOverrides`:
 
 ```ts
 betterEditor({
@@ -306,7 +337,7 @@ betterEditor({
 })
 ```
 
-The editor overlay reads the global from the admin panel with the user's session, so `read` only needs to allow users who can open the editor. Setting an operation explicitly, even to `() => true`, silences the warning for it.
+The editor overlay reads the global from the admin panel with the user's session, so `read` only needs to allow users who can open the editor.
 
 ### Shipping your own settings global
 
@@ -329,7 +360,7 @@ export default buildConfig({
 })
 ```
 
-The startup warning checks your own global too. Here an unset `read` counts as restricted, since Payload then only allows logged-in users.
+The startup warning checks your own global too. An unset `read` counts as restricted, since Payload then only allows logged-in users; an unset `update` is flagged, since Payload then allows any logged-in user.
 
 Do not add sensitive fields to `BetterEditorSettings` without tightening the read access first.
 
@@ -364,6 +395,10 @@ The plugin walks form-state paths like `layout.0`. Check that:
 
 - `blocksField` matches your document's blocks-field name (default is `'layout'`)
 - The selected element's `data-better-editor-id` matches the row's `id` in form state
+
+### The draft prompt does not appear
+
+Check, in order: `draftPrompt: true` is set on that collection in the record form (the slug-list form cannot carry options); the collection has `versions: { drafts: true }`; the document has been published at least once and has been edited since (the status next to the title reads "Changed"); the import map was regenerated after installing the version that has the option; and the user can update the document.
 
 ### The preview doesn't update when I move / duplicate / edit blocks
 

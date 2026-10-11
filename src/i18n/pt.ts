@@ -76,6 +76,15 @@ export const pt: BetterEditorTranslations = {
     resizeLeft: 'Redimensionar a pré-visualização a partir da esquerda',
     resizeRight: 'Redimensionar a pré-visualização a partir da direita',
   },
+  draftPrompt: {
+    title: 'Existe um rascunho mais recente',
+    body: 'Este documento tem alterações mais recentes não publicadas. Como deseja continuar?',
+    continue: 'Continuar a editar o rascunho',
+    restore: 'Restaurar a versão publicada',
+    restoring: 'A restaurar…',
+    versionsHint: 'O rascunho descartado continua disponível nas versões.',
+    error: 'Não foi possível restaurar a versão publicada.',
+  },
   error: {
     heading: 'O Better Editor falhou',
     unknown: 'Erro desconhecido.',

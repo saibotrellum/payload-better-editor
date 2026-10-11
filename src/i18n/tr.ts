@@ -76,6 +76,15 @@ export const tr: BetterEditorTranslations = {
     resizeLeft: 'Önizlemeyi soldan yeniden boyutlandır',
     resizeRight: 'Önizlemeyi sağdan yeniden boyutlandır',
   },
+  draftPrompt: {
+    title: 'Daha yeni bir taslak var',
+    body: 'Bu belgenin daha yeni, yayımlanmamış değişiklikleri var. Nasıl devam etmek istersiniz?',
+    continue: 'Taslağı düzenlemeye devam et',
+    restore: 'Yayımlanmış sürümü geri yükle',
+    restoring: 'Geri yükleniyor…',
+    versionsHint: 'Vazgeçilen taslak sürümlerde erişilebilir kalır.',
+    error: 'Yayımlanmış sürüm geri yüklenemedi.',
+  },
   error: {
     heading: 'Better Editor çöktü',
     unknown: 'Bilinmeyen hata.',

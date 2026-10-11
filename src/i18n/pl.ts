@@ -76,6 +76,15 @@ export const pl: BetterEditorTranslations = {
     resizeLeft: 'Zmień rozmiar podglądu od lewej',
     resizeRight: 'Zmień rozmiar podglądu od prawej',
   },
+  draftPrompt: {
+    title: 'Istnieje nowsza wersja robocza',
+    body: 'Ten dokument ma nowsze, nieopublikowane zmiany. Jak chcesz kontynuować?',
+    continue: 'Kontynuuj edycję wersji roboczej',
+    restore: 'Przywróć opublikowaną wersję',
+    restoring: 'Przywracanie…',
+    versionsHint: 'Odrzucona wersja robocza pozostaje dostępna w wersjach.',
+    error: 'Nie udało się przywrócić opublikowanej wersji.',
+  },
   error: {
     heading: 'Better Editor uległ awarii',
     unknown: 'Nieznany błąd.',

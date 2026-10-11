@@ -76,6 +76,15 @@ export const ro: BetterEditorTranslations = {
     resizeLeft: 'Redimensionează previzualizarea din stânga',
     resizeRight: 'Redimensionează previzualizarea din dreapta',
   },
+  draftPrompt: {
+    title: 'Există o ciornă mai nouă',
+    body: 'Acest document are modificări mai noi, nepublicate. Cum doriți să continuați?',
+    continue: 'Continuă editarea ciornei',
+    restore: 'Restaurează versiunea publicată',
+    restoring: 'Se restaurează…',
+    versionsHint: 'Ciorna eliminată rămâne disponibilă în versiuni.',
+    error: 'Versiunea publicată nu a putut fi restaurată.',
+  },
   error: {
     heading: 'Better Editor s-a blocat',
     unknown: 'Eroare necunoscută.',

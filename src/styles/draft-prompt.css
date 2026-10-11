@@ -1,0 +1,59 @@
+/* Draft prompt - modal asking whether to continue a newer draft. */
+
+.better-editor-draft-prompt__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.better-editor-draft-prompt {
+  max-width: 28rem;
+  width: 100%;
+  padding: 1.5rem;
+  border: 1px solid var(--theme-elevation-150);
+  border-radius: var(--style-radius-m, 4px);
+  background: var(--theme-bg);
+  color: var(--theme-text);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+}
+
+.better-editor-draft-prompt__title {
+  margin: 0 0 0.5rem;
+  font-size: 1.25rem;
+}
+
+.better-editor-draft-prompt__body {
+  margin: 0 0 1.25rem;
+  color: var(--theme-elevation-800);
+}
+
+.better-editor-draft-prompt__error {
+  margin: 0 0 1rem;
+  color: var(--theme-error-500);
+}
+
+.better-editor-draft-prompt__actions {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.better-editor-draft-prompt__actions .btn {
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0;
+  white-space: normal;
+  text-align: center;
+}
+
+.better-editor-draft-prompt__hint {
+  margin: 0.75rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--theme-elevation-600);
+}

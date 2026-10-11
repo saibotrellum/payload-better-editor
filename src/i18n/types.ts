@@ -69,6 +69,15 @@ export type BetterEditorTranslations = {
     resizeLeft: string
     resizeRight: string
   }
+  draftPrompt: {
+    title: string
+    body: string
+    continue: string
+    restore: string
+    restoring: string
+    versionsHint: string
+    error: string
+  }
   error: {
     heading: string
     unknown: string

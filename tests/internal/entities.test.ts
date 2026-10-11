@@ -4,8 +4,8 @@ import { normalizeEntities } from '../../src/internal/entities'
 describe('normalizeEntities', () => {
   it('maps a slug array to the default blocksField', () => {
     const m = normalizeEntities(['pages', 'articles'], 'layout')
-    expect(m.get('pages')).toEqual({ blocksField: 'layout', defaultOpen: false })
-    expect(m.get('articles')).toEqual({ blocksField: 'layout', defaultOpen: false })
+    expect(m.get('pages')).toEqual({ blocksField: 'layout', defaultOpen: false, draftPrompt: false })
+    expect(m.get('articles')).toEqual({ blocksField: 'layout', defaultOpen: false, draftPrompt: false })
     expect(m.size).toBe(2)
   })
 
@@ -23,5 +23,14 @@ describe('normalizeEntities', () => {
 
   it('returns an empty map for undefined', () => {
     expect(normalizeEntities(undefined, 'layout').size).toBe(0)
+  })
+})
+
+describe('normalizeEntities draftPrompt', () => {
+  it('defaults to false and reads the per-entity flag', () => {
+    const map = normalizeEntities({ a: { draftPrompt: true }, b: {} }, 'layout')
+    expect(map.get('a')?.draftPrompt).toBe(true)
+    expect(map.get('b')?.draftPrompt).toBe(false)
+    expect(normalizeEntities(['c'], 'layout').get('c')?.draftPrompt).toBe(false)
   })
 })

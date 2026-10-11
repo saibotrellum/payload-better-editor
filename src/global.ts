@@ -1,4 +1,5 @@
 import type { GlobalConfig } from 'payload'
+import { defaultSettingsRead, defaultSettingsUpdate } from './internal/default-access.js'
 import { DEFAULT_BETTER_EDITOR_SETTINGS as D } from './internal/constants.js'
 import {
   HOVER_OUTLINE_MAX,
@@ -61,7 +62,8 @@ export const betterEditorSettingsGlobal: GlobalConfig = {
   slug: BETTER_EDITOR_SETTINGS_SLUG,
   label: translatedLabel('globalLabel'),
   access: {
-    read: () => true,
+    read: defaultSettingsRead,
+    update: defaultSettingsUpdate,
   },
   admin: {
     group: 'Better Editor',

@@ -7,6 +7,12 @@ export { LiveEditorToggle } from './admin/LiveEditorToggle.js'
 export type { LiveEditorToggleProps } from './admin/LiveEditorToggle.js'
 
 /**
+ * The prompt that asks whether to continue a newer draft or restore the
+ * published version. Auto-injected for collections with `draftPrompt: true`.
+ */
+export { DraftPrompt } from './admin/DraftPrompt.js'
+
+/**
  * The full editor overlay (preview iframe + 3-tab sidebar). Mounted into
  * the Payload admin shell when the toggle opens it. Exported so consumers
  * can build a custom toggle / wrapper if they need to bypass the
