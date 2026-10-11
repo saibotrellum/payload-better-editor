@@ -78,7 +78,7 @@ export const pl: BetterEditorTranslations = {
   },
   draftPrompt: {
     title: 'Istnieje nowsza wersja robocza',
-    body: 'Ten dokument ma opublikowaną wersję oraz nowsze, nieopublikowane zmiany. Jak chcesz kontynuować?',
+    body: 'Ten dokument ma nowsze, nieopublikowane zmiany. Jak chcesz kontynuować?',
     continue: 'Kontynuuj edycję wersji roboczej',
     restore: 'Przywróć opublikowaną wersję',
     restoring: 'Przywracanie…',

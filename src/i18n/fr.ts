@@ -78,7 +78,7 @@ export const fr: BetterEditorTranslations = {
   },
   draftPrompt: {
     title: 'Un brouillon plus récent existe',
-    body: 'Ce document a une version publiée et des modifications plus récentes non publiées. Comment souhaitez-vous continuer ?',
+    body: 'Ce document a des modifications plus récentes non publiées. Comment souhaitez-vous continuer ?',
     continue: 'Continuer à modifier le brouillon',
     restore: 'Restaurer la version publiée',
     restoring: 'Restauration…',

@@ -78,7 +78,7 @@ export const es: BetterEditorTranslations = {
   },
   draftPrompt: {
     title: 'Existe un borrador más reciente',
-    body: 'Este documento tiene una versión publicada y cambios más recientes sin publicar. ¿Cómo desea continuar?',
+    body: 'Este documento tiene cambios más recientes sin publicar. ¿Cómo desea continuar?',
     continue: 'Seguir editando el borrador',
     restore: 'Restaurar la versión publicada',
     restoring: 'Restaurando…',

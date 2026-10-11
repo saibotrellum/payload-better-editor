@@ -101,6 +101,20 @@ describe('DraftPrompt', () => {
     expect(screen.getByRole('button', { name: /restore the published version/i })).toBeTruthy()
   })
 
+  it('puts the draft action left as secondary and the restore action right as primary', async () => {
+    await renderPrompt()
+    const buttons = screen.getAllByRole('button')
+    expect(buttons.map((b) => b.textContent)).toEqual([
+      'Continue editing the draft',
+      'Restore the published version',
+    ])
+    expect(buttons[0].className).toContain('btn--style-secondary')
+    expect(buttons[1].className).toContain('btn--style-primary')
+    expect(screen.getByRole('alertdialog').textContent).toContain(
+      'This document has newer, unpublished changes. How would you like to proceed?',
+    )
+  })
+
   it('continue closes the prompt and touches nothing', async () => {
     await renderPrompt()
     fireEvent.click(screen.getByRole('button', { name: /continue editing the draft/i }))

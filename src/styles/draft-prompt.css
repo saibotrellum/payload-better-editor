@@ -39,7 +39,15 @@
 
 .better-editor-draft-prompt__actions {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
+  flex-wrap: nowrap;
+  justify-content: space-between;
   gap: 0.5rem;
+}
+
+.better-editor-draft-prompt__actions .btn {
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0;
+  white-space: normal;
+  text-align: center;
 }

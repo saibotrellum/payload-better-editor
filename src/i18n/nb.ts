@@ -78,7 +78,7 @@ export const nb: BetterEditorTranslations = {
   },
   draftPrompt: {
     title: 'Det finnes et nyere utkast',
-    body: 'Dette dokumentet har en publisert versjon og nyere, upubliserte endringer. Hvordan vil du fortsette?',
+    body: 'Dette dokumentet har nyere, upubliserte endringer. Hvordan vil du fortsette?',
     continue: 'Fortsett å redigere utkastet',
     restore: 'Gjenopprett den publiserte versjonen',
     restoring: 'Gjenoppretter…',

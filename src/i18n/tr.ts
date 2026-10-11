@@ -78,7 +78,7 @@ export const tr: BetterEditorTranslations = {
   },
   draftPrompt: {
     title: 'Daha yeni bir taslak var',
-    body: 'Bu belgenin yayımlanmış bir sürümü ve daha yeni, yayımlanmamış değişiklikleri var. Nasıl devam etmek istersiniz?',
+    body: 'Bu belgenin daha yeni, yayımlanmamış değişiklikleri var. Nasıl devam etmek istersiniz?',
     continue: 'Taslağı düzenlemeye devam et',
     restore: 'Yayımlanmış sürümü geri yükle',
     restoring: 'Geri yükleniyor…',

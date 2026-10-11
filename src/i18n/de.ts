@@ -77,7 +77,7 @@ export const de: BetterEditorTranslations = {
   },
   draftPrompt: {
     title: 'Es gibt einen neueren Entwurf',
-    body: 'Dieses Dokument hat eine veröffentlichte Version und neuere, unveröffentlichte Änderungen. Wie möchten Sie fortfahren?',
+    body: 'Dieses Dokument hat neuere, unveröffentlichte Änderungen. Wie möchten Sie fortfahren?',
     continue: 'Entwurf weiterbearbeiten',
     restore: 'Veröffentlichte Version wiederherstellen',
     restoring: 'Wird wiederhergestellt …',

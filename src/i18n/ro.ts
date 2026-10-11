@@ -78,7 +78,7 @@ export const ro: BetterEditorTranslations = {
   },
   draftPrompt: {
     title: 'Există o ciornă mai nouă',
-    body: 'Acest document are o versiune publicată și modificări mai noi, nepublicate. Cum doriți să continuați?',
+    body: 'Acest document are modificări mai noi, nepublicate. Cum doriți să continuați?',
     continue: 'Continuă editarea ciornei',
     restore: 'Restaurează versiunea publicată',
     restoring: 'Se restaurează…',

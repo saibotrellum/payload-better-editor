@@ -78,7 +78,7 @@ export const cs: BetterEditorTranslations = {
   },
   draftPrompt: {
     title: 'Existuje novější koncept',
-    body: 'Tento dokument má publikovanou verzi a novější nepublikované změny. Jak chcete pokračovat?',
+    body: 'Tento dokument má novější nepublikované změny. Jak chcete pokračovat?',
     continue: 'Pokračovat v úpravách konceptu',
     restore: 'Obnovit publikovanou verzi',
     restoring: 'Obnovuji…',

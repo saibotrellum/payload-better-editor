@@ -77,7 +77,7 @@ export const en: BetterEditorTranslations = {
   },
   draftPrompt: {
     title: 'A newer draft exists',
-    body: 'This document has a published version and newer, unpublished changes. How do you want to continue?',
+    body: 'This document has newer, unpublished changes. How would you like to proceed?',
     continue: 'Continue editing the draft',
     restore: 'Restore the published version',
     restoring: 'Restoring…',

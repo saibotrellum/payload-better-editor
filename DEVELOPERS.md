@@ -125,10 +125,10 @@ betterEditor({
 })
 ```
 
-When such a document opens, a dialog offers two choices:
+When such a document opens, a dialog offers two choices, side by side:
 
-- **Continue editing the draft** closes the dialog and changes nothing.
-- **Restore the published version** does what Payload's own "Revert to published" does: it reads the published document and saves it back as the current one, so the draft is gone.
+- **Continue editing the draft** (left, secondary) closes the dialog and changes nothing.
+- **Restore the published version** (right, primary) does what Payload's own "Revert to published" does: it reads the published document and saves it back as the current one, so the draft is gone.
 
 Details worth knowing:
 

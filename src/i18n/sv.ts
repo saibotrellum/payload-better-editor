@@ -78,7 +78,7 @@ export const sv: BetterEditorTranslations = {
   },
   draftPrompt: {
     title: 'Det finns ett nyare utkast',
-    body: 'Det här dokumentet har en publicerad version och nyare, opublicerade ändringar. Hur vill du fortsätta?',
+    body: 'Det här dokumentet har nyare, opublicerade ändringar. Hur vill du fortsätta?',
     continue: 'Fortsätt redigera utkastet',
     restore: 'Återställ den publicerade versionen',
     restoring: 'Återställer…',

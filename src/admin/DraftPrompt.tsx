@@ -154,21 +154,21 @@ export const DraftPrompt: React.FC = () => {
         ) : null}
         <div className="better-editor-draft-prompt__actions">
           <button
-            type="button"
-            className="btn btn--style-secondary btn--size-medium"
-            disabled={busy}
-            onClick={() => void restore()}
-          >
-            {busy ? t.restoring : t.restore}
-          </button>
-          <button
             ref={continueRef}
             type="button"
-            className="btn btn--style-primary btn--size-medium"
+            className="btn btn--style-secondary btn--size-medium"
             disabled={busy}
             onClick={dismiss}
           >
             {t.continue}
+          </button>
+          <button
+            type="button"
+            className="btn btn--style-primary btn--size-medium"
+            disabled={busy}
+            onClick={() => void restore()}
+          >
+            {busy ? t.restoring : t.restore}
           </button>
         </div>
       </div>

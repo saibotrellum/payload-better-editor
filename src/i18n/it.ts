@@ -78,7 +78,7 @@ export const it: BetterEditorTranslations = {
   },
   draftPrompt: {
     title: 'Esiste una bozza più recente',
-    body: 'Questo documento ha una versione pubblicata e modifiche più recenti non pubblicate. Come vuoi continuare?',
+    body: 'Questo documento ha modifiche più recenti non pubblicate. Come vuoi continuare?',
     continue: 'Continua a modificare la bozza',
     restore: 'Ripristina la versione pubblicata',
     restoring: 'Ripristino…',

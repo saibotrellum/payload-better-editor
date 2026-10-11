@@ -78,7 +78,7 @@ export const pt: BetterEditorTranslations = {
   },
   draftPrompt: {
     title: 'Existe um rascunho mais recente',
-    body: 'Este documento tem uma versão publicada e alterações mais recentes não publicadas. Como deseja continuar?',
+    body: 'Este documento tem alterações mais recentes não publicadas. Como deseja continuar?',
     continue: 'Continuar a editar o rascunho',
     restore: 'Restaurar a versão publicada',
     restoring: 'A restaurar…',

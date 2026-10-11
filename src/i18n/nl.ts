@@ -78,7 +78,7 @@ export const nl: BetterEditorTranslations = {
   },
   draftPrompt: {
     title: 'Er bestaat een nieuwere concepttekst',
-    body: 'Dit document heeft een gepubliceerde versie en nieuwere, niet-gepubliceerde wijzigingen. Hoe wilt u verdergaan?',
+    body: 'Dit document heeft nieuwere, niet-gepubliceerde wijzigingen. Hoe wilt u verdergaan?',
     continue: 'Verder werken aan het concept',
     restore: 'Gepubliceerde versie herstellen',
     restoring: 'Herstellen…',
