@@ -82,6 +82,7 @@ export const pt: BetterEditorTranslations = {
     continue: 'Continuar a editar o rascunho',
     restore: 'Restaurar a versão publicada',
     restoring: 'A restaurar…',
+    versionsHint: 'O rascunho descartado continua disponível nas versões.',
     error: 'Não foi possível restaurar a versão publicada.',
   },
   error: {

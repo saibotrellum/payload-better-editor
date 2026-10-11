@@ -82,6 +82,7 @@ export const ro: BetterEditorTranslations = {
     continue: 'Continuă editarea ciornei',
     restore: 'Restaurează versiunea publicată',
     restoring: 'Se restaurează…',
+    versionsHint: 'Ciorna eliminată rămâne disponibilă în versiuni.',
     error: 'Versiunea publicată nu a putut fi restaurată.',
   },
   error: {

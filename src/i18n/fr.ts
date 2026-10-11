@@ -82,6 +82,7 @@ export const fr: BetterEditorTranslations = {
     continue: 'Continuer à modifier le brouillon',
     restore: 'Restaurer la version publiée',
     restoring: 'Restauration…',
+    versionsHint: 'Le brouillon abandonné reste disponible dans les versions.',
     error: 'Impossible de restaurer la version publiée.',
   },
   error: {

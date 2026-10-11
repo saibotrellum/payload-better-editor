@@ -171,6 +171,7 @@ export const DraftPrompt: React.FC = () => {
             {busy ? t.restoring : t.restore}
           </button>
         </div>
+        <p className="better-editor-draft-prompt__hint">{t.versionsHint}</p>
       </div>
     </div>,
     document.body,

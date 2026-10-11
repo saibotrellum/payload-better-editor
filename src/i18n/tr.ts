@@ -82,6 +82,7 @@ export const tr: BetterEditorTranslations = {
     continue: 'Taslağı düzenlemeye devam et',
     restore: 'Yayımlanmış sürümü geri yükle',
     restoring: 'Geri yükleniyor…',
+    versionsHint: 'Vazgeçilen taslak sürümlerde erişilebilir kalır.',
     error: 'Yayımlanmış sürüm geri yüklenemedi.',
   },
   error: {

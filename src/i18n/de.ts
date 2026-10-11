@@ -81,6 +81,7 @@ export const de: BetterEditorTranslations = {
     continue: 'Entwurf weiterbearbeiten',
     restore: 'Veröffentlichte Version wiederherstellen',
     restoring: 'Wird wiederhergestellt …',
+    versionsHint: 'Der verworfene Entwurf bleibt in den Versionen erhalten.',
     error: 'Die veröffentlichte Version konnte nicht wiederhergestellt werden.',
   },
   error: {

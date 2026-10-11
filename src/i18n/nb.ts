@@ -82,6 +82,7 @@ export const nb: BetterEditorTranslations = {
     continue: 'Fortsett å redigere utkastet',
     restore: 'Gjenopprett den publiserte versjonen',
     restoring: 'Gjenoppretter…',
+    versionsHint: 'Det forkastede utkastet er fortsatt tilgjengelig i versjonene.',
     error: 'Kunne ikke gjenopprette den publiserte versjonen.',
   },
   error: {

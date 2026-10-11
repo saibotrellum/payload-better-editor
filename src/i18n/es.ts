@@ -82,6 +82,7 @@ export const es: BetterEditorTranslations = {
     continue: 'Seguir editando el borrador',
     restore: 'Restaurar la versión publicada',
     restoring: 'Restaurando…',
+    versionsHint: 'El borrador descartado sigue disponible en las versiones.',
     error: 'No se pudo restaurar la versión publicada.',
   },
   error: {

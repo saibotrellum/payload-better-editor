@@ -82,6 +82,7 @@ export const nl: BetterEditorTranslations = {
     continue: 'Verder werken aan het concept',
     restore: 'Gepubliceerde versie herstellen',
     restoring: 'Herstellen…',
+    versionsHint: 'Het verworpen concept blijft beschikbaar in de versies.',
     error: 'De gepubliceerde versie kon niet worden hersteld.',
   },
   error: {

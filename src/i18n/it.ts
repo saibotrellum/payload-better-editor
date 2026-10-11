@@ -82,6 +82,7 @@ export const it: BetterEditorTranslations = {
     continue: 'Continua a modificare la bozza',
     restore: 'Ripristina la versione pubblicata',
     restoring: 'Ripristino…',
+    versionsHint: 'La bozza scartata resta disponibile nelle versioni.',
     error: 'Impossibile ripristinare la versione pubblicata.',
   },
   error: {

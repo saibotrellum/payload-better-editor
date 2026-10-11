@@ -82,6 +82,7 @@ export const sv: BetterEditorTranslations = {
     continue: 'Fortsätt redigera utkastet',
     restore: 'Återställ den publicerade versionen',
     restoring: 'Återställer…',
+    versionsHint: 'Det förkastade utkastet finns kvar bland versionerna.',
     error: 'Det gick inte att återställa den publicerade versionen.',
   },
   error: {

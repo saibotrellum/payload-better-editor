@@ -115,6 +115,13 @@ describe('DraftPrompt', () => {
     )
   })
 
+  it('tells the editor that the discarded draft stays in the versions', async () => {
+    await renderPrompt()
+    expect(screen.getByRole('alertdialog').textContent).toContain(
+      'The discarded draft stays available in the versions.',
+    )
+  })
+
   it('continue closes the prompt and touches nothing', async () => {
     await renderPrompt()
     fireEvent.click(screen.getByRole('button', { name: /continue editing the draft/i }))

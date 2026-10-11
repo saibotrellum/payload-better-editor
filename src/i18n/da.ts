@@ -82,6 +82,7 @@ export const da: BetterEditorTranslations = {
     continue: 'Fortsæt med at redigere udkastet',
     restore: 'Gendan den udgivne version',
     restoring: 'Gendanner…',
+    versionsHint: 'Det kasserede udkast er stadig tilgængeligt i versionerne.',
     error: 'Den udgivne version kunne ikke gendannes.',
   },
   error: {

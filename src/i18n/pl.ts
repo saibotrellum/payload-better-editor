@@ -82,6 +82,7 @@ export const pl: BetterEditorTranslations = {
     continue: 'Kontynuuj edycję wersji roboczej',
     restore: 'Przywróć opublikowaną wersję',
     restoring: 'Przywracanie…',
+    versionsHint: 'Odrzucona wersja robocza pozostaje dostępna w wersjach.',
     error: 'Nie udało się przywrócić opublikowanej wersji.',
   },
   error: {

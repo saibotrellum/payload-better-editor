@@ -82,6 +82,7 @@ export const cs: BetterEditorTranslations = {
     continue: 'Pokračovat v úpravách konceptu',
     restore: 'Obnovit publikovanou verzi',
     restoring: 'Obnovuji…',
+    versionsHint: 'Zahozený koncept zůstane dostupný ve verzích.',
     error: 'Publikovanou verzi se nepodařilo obnovit.',
   },
   error: {

@@ -81,6 +81,7 @@ export const en: BetterEditorTranslations = {
     continue: 'Continue editing the draft',
     restore: 'Restore the published version',
     restoring: 'Restoring…',
+    versionsHint: 'The discarded draft stays available in the versions.',
     error: 'Could not restore the published version.',
   },
   error: {

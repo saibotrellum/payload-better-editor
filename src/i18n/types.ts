@@ -75,6 +75,7 @@ export type BetterEditorTranslations = {
     continue: string
     restore: string
     restoring: string
+    versionsHint: string
     error: string
   }
   error: {
