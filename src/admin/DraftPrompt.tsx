@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { createPortal } from 'react-dom'
-import { useConfig, useDocumentInfo, useForm, useLocale, useTranslation } from '@payloadcms/ui'
+import { useConfig, useDocumentEvents, useDocumentInfo, useForm, useLocale, useTranslation } from '@payloadcms/ui'
 import { useBetterEditorT } from '../i18n/useBetterEditorT.js'
 import '../styles/draft-prompt.css'
 
@@ -33,6 +33,7 @@ export const DraftPrompt: React.FC = () => {
     },
   } = useConfig()
   const { reset: resetForm } = useForm()
+  const { reportUpdate } = useDocumentEvents()
   const { code: locale } = useLocale()
   const { i18n } = useTranslation()
 
@@ -96,6 +97,14 @@ export const DraftPrompt: React.FC = () => {
       incrementVersionCount()
       setMostRecentVersionIsAutosaved(false)
       setUnpublishedVersionCount(0)
+      // Same event a save emits; the overlay forwards it so its preview reloads.
+      reportUpdate({
+        id,
+        doc: json.doc,
+        entitySlug: collectionSlug,
+        operation: 'update',
+        updatedAt: json.doc?.updatedAt ?? new Date().toISOString(),
+      })
       setDismissedId(id)
     } catch {
       setError(t.error)
@@ -109,6 +118,7 @@ export const DraftPrompt: React.FC = () => {
     locale,
     i18n.language,
     resetForm,
+    reportUpdate,
     incrementVersionCount,
     setMostRecentVersionIsAutosaved,
     setUnpublishedVersionCount,

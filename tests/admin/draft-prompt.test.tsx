@@ -18,6 +18,7 @@ type Info = {
 
 let info: Info
 const resetForm = vi.fn()
+const reportUpdate = vi.fn()
 const incrementVersionCount = vi.fn()
 const setUnpublishedVersionCount = vi.fn()
 const setMostRecentVersionIsAutosaved = vi.fn()
@@ -32,6 +33,7 @@ vi.mock('@payloadcms/ui', () => ({
   }),
   useConfig: () => ({ config: { routes: { api: '/api' } } }),
   useForm: () => ({ reset: resetForm }),
+  useDocumentEvents: () => ({ reportUpdate }),
   useLocale: () => ({ code: 'de' }),
   useTranslation: () => ({ i18n: { translations: {}, language: 'de' } }),
 }))
@@ -55,6 +57,7 @@ const renderPrompt = async () => {
 beforeEach(() => {
   info = changedDoc()
   resetForm.mockReset()
+  reportUpdate.mockReset()
   incrementVersionCount.mockReset()
   setUnpublishedVersionCount.mockReset()
   setMostRecentVersionIsAutosaved.mockReset()
@@ -147,6 +150,10 @@ describe('DraftPrompt', () => {
     expect(patchInit.method).toBe('PATCH')
     expect(JSON.parse(patchInit.body)).toEqual(published)
     expect(setUnpublishedVersionCount).toHaveBeenCalledWith(0)
+    // The editor overlay's preview refreshes from this event.
+    expect(reportUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'doc1', entitySlug: 'content', operation: 'update' }),
+    )
     expect(screen.queryByRole('alertdialog')).toBeNull()
   })
 
