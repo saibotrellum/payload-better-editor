@@ -132,6 +132,7 @@ When such a document opens, a dialog offers two choices, side by side:
 
 Details worth knowing:
 
+- Below the buttons a hint says the discarded draft stays available in the document's versions (restoring saves the published version as a new version; the draft version is kept).
 - It asks on every open, with no memory between sessions. It decides once when the document opens, so autosave while typing never raises it mid-edit.
 - It does not ask for a never-published document, when no newer draft exists, or for a user who may not update the document.
 - It shows whether or not the editor overlay is open, and needs no preview URL.
