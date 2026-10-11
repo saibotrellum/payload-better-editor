@@ -76,6 +76,14 @@ export const es: BetterEditorTranslations = {
     resizeLeft: 'Redimensionar la vista previa desde la izquierda',
     resizeRight: 'Redimensionar la vista previa desde la derecha',
   },
+  draftPrompt: {
+    title: 'Existe un borrador más reciente',
+    body: 'Este documento tiene una versión publicada y cambios más recientes sin publicar. ¿Cómo desea continuar?',
+    continue: 'Seguir editando el borrador',
+    restore: 'Restaurar la versión publicada',
+    restoring: 'Restaurando…',
+    error: 'No se pudo restaurar la versión publicada.',
+  },
   error: {
     heading: 'Better Editor ha fallado',
     unknown: 'Error desconocido.',

@@ -94,8 +94,8 @@ Passed to `betterEditor({ … })`:
 | Option | Type | Default | Description |
 |---|---|---|---|
 | `disabled` | `boolean` | `false` | Disable the plugin entirely |
-| `collections` | `string[]` \| `Record<slug, { blocksField?: string; defaultOpen?: boolean }>` | `[]` | Collection slugs — or a slug → options record for per-collection settings (e.g. a different `blocksField`) — where the toggle should appear |
-| `globals` | `string[]` \| `Record<slug, { blocksField?: string; defaultOpen?: boolean }>` | `[]` | Global slugs, or a slug → options record, where the toggle should appear |
+| `collections` | `string[]` \| `Record<slug, { blocksField?: string; defaultOpen?: boolean; draftPrompt?: boolean }>` | `[]` | Collection slugs — or a slug → options record for per-collection settings (e.g. a different `blocksField`) — where the toggle should appear. `draftPrompt` (default `false`) asks whether to continue a newer draft or restore the published version, see "Ask before continuing a newer draft" |
+| `globals` | `string[]` \| `Record<slug, { blocksField?: string; defaultOpen?: boolean; draftPrompt?: boolean }>` | `[]` | Global slugs, or a slug → options record, where the toggle should appear |
 | `blocksField` | `string` | `'layout'` | Default name of the document field holding the top-level blocks array; per-collection overrides in the `collections`/`globals` record take precedence |
 | `adminPortalSelector` | `string` | Payload `__main-wrapper` | CSS selector for the admin element the overlay portals into. Override only if the default selector breaks against a future Payload version. Falls back to `<main>` then `<body>`. |
 | `storageNamespace` | `string` | `'better-editor'` | Prefix for `localStorage` keys (sidebar width, responsive viewport width) and for the toggle's open/closed Payload preference. Set if multiple instances on the same origin would otherwise collide. |
@@ -114,6 +114,29 @@ betterEditor({
 ```
 
 Once a user opens or closes the editor, their saved choice wins over the default. The editor still only appears when a preview URL resolves. For a new document whose preview URL depends on a slug, the regular edit view shows until the slug is saved, then the editor opens.
+
+### Ask before continuing a newer draft
+
+A document that has a published version and newer unpublished changes (an autosaved draft) opens straight into the draft, and nothing says that the published page looks different. To ask instead, set `draftPrompt` on the collection:
+
+```ts
+betterEditor({
+  collections: { pages: { defaultOpen: true, draftPrompt: true } },
+})
+```
+
+When such a document opens, a dialog offers two choices:
+
+- **Continue editing the draft** closes the dialog and changes nothing.
+- **Restore the published version** does what Payload's own "Revert to published" does: it reads the published document and saves it back as the current one, so the draft is gone.
+
+Details worth knowing:
+
+- It asks on every open, with no memory between sessions. It decides once when the document opens, so autosave while typing never raises it mid-edit.
+- It does not ask for a never-published document, when no newer draft exists, or for a user who may not update the document.
+- It shows whether or not the editor overlay is open, and needs no preview URL.
+- Collections only. `draftPrompt` is ignored for globals, and the collection needs `versions.drafts`.
+- Labels live under `draftPrompt` in the translation set (see "Translations").
 
 ### Translations
 
@@ -371,6 +394,10 @@ The plugin walks form-state paths like `layout.0`. Check that:
 
 - `blocksField` matches your document's blocks-field name (default is `'layout'`)
 - The selected element's `data-better-editor-id` matches the row's `id` in form state
+
+### The draft prompt does not appear
+
+Check, in order: `draftPrompt: true` is set on that collection in the record form (the slug-list form cannot carry options); the collection has `versions: { drafts: true }`; the document has been published at least once and has been edited since (the status next to the title reads "Changed"); the import map was regenerated after installing the version that has the option; and the user can update the document.
 
 ### The preview doesn't update when I move / duplicate / edit blocks
 

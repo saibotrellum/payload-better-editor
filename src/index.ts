@@ -23,6 +23,7 @@ export { VERSION } from './version.js'
 
 const DEFAULT_BLOCKS_FIELD = 'layout'
 const TOGGLE_COMPONENT_PATH = 'payload-better-editor/client#LiveEditorToggle'
+const DRAFT_PROMPT_COMPONENT_PATH = 'payload-better-editor/client#DraftPrompt'
 const isDev = process.env.NODE_ENV !== 'production'
 
 // The plugin factory can run more than once per process (e.g. per Next.js
@@ -65,6 +66,7 @@ const withToggleInjected = <T extends CollectionConfig | GlobalConfig>(
   entity: T,
   slot: ToggleSlot,
   clientProps: ToggleClientProps,
+  withDraftPrompt = false,
 ): T => {
   const admin = { ...(entity.admin ?? {}) } as NonNullable<T['admin']>
   const components = { ...(admin.components ?? {}) } as Record<string, unknown>
@@ -81,6 +83,7 @@ const withToggleInjected = <T extends CollectionConfig | GlobalConfig>(
           beforeDocumentControls: [
             ...before,
             { path: TOGGLE_COMPONENT_PATH, clientProps },
+            ...(withDraftPrompt ? [{ path: DRAFT_PROMPT_COMPONENT_PATH }] : []),
           ],
         },
       },
@@ -198,7 +201,7 @@ export const betterEditor =
         if (isDev && !hasBlocksField(collection.fields, entity.blocksField)) {
           warnMissingBlocksField('collection', collection.slug, entity.blocksField)
         }
-        return withToggleInjected(collection, 'edit', toggleClientProps(entity))
+        return withToggleInjected(collection, 'edit', toggleClientProps(entity), entity.draftPrompt)
       })
     }
 

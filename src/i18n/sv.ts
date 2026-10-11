@@ -76,6 +76,14 @@ export const sv: BetterEditorTranslations = {
     resizeLeft: 'Ändra storlek på förhandsvisningen från vänster',
     resizeRight: 'Ändra storlek på förhandsvisningen från höger',
   },
+  draftPrompt: {
+    title: 'Det finns ett nyare utkast',
+    body: 'Det här dokumentet har en publicerad version och nyare, opublicerade ändringar. Hur vill du fortsätta?',
+    continue: 'Fortsätt redigera utkastet',
+    restore: 'Återställ den publicerade versionen',
+    restoring: 'Återställer…',
+    error: 'Det gick inte att återställa den publicerade versionen.',
+  },
   error: {
     heading: 'Better Editor kraschade',
     unknown: 'Okänt fel.',

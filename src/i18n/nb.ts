@@ -76,6 +76,14 @@ export const nb: BetterEditorTranslations = {
     resizeLeft: 'Endre størrelse på forhåndsvisningen fra venstre',
     resizeRight: 'Endre størrelse på forhåndsvisningen fra høyre',
   },
+  draftPrompt: {
+    title: 'Det finnes et nyere utkast',
+    body: 'Dette dokumentet har en publisert versjon og nyere, upubliserte endringer. Hvordan vil du fortsette?',
+    continue: 'Fortsett å redigere utkastet',
+    restore: 'Gjenopprett den publiserte versjonen',
+    restoring: 'Gjenoppretter…',
+    error: 'Kunne ikke gjenopprette den publiserte versjonen.',
+  },
   error: {
     heading: 'Better Editor krasjet',
     unknown: 'Ukjent feil.',

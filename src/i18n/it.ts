@@ -76,6 +76,14 @@ export const it: BetterEditorTranslations = {
     resizeLeft: 'Ridimensiona l’anteprima da sinistra',
     resizeRight: 'Ridimensiona l’anteprima da destra',
   },
+  draftPrompt: {
+    title: 'Esiste una bozza più recente',
+    body: 'Questo documento ha una versione pubblicata e modifiche più recenti non pubblicate. Come vuoi continuare?',
+    continue: 'Continua a modificare la bozza',
+    restore: 'Ripristina la versione pubblicata',
+    restoring: 'Ripristino…',
+    error: 'Impossibile ripristinare la versione pubblicata.',
+  },
   error: {
     heading: 'Better Editor si è arrestato',
     unknown: 'Errore sconosciuto.',

@@ -76,6 +76,14 @@ export const da: BetterEditorTranslations = {
     resizeLeft: 'Tilpas forhåndsvisningen fra venstre',
     resizeRight: 'Tilpas forhåndsvisningen fra højre',
   },
+  draftPrompt: {
+    title: 'Der findes et nyere udkast',
+    body: 'Dette dokument har en udgivet version og nyere, ikke-udgivne ændringer. Hvordan vil du fortsætte?',
+    continue: 'Fortsæt med at redigere udkastet',
+    restore: 'Gendan den udgivne version',
+    restoring: 'Gendanner…',
+    error: 'Den udgivne version kunne ikke gendannes.',
+  },
   error: {
     heading: 'Better Editor gik ned',
     unknown: 'Ukendt fejl.',
