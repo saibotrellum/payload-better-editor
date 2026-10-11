@@ -1,10 +1,12 @@
 'use client'
 
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { createPortal } from 'react-dom'
 import { useConfig, useDocumentInfo, useForm, useLocale, useTranslation } from '@payloadcms/ui'
 import { useBetterEditorT } from '../i18n/useBetterEditorT.js'
 import '../styles/draft-prompt.css'
+
+const subscribeNever = () => () => {}
 
 type Decision = { id: string | number | undefined; ask: boolean }
 
@@ -53,7 +55,13 @@ export const DraftPrompt: React.FC = () => {
   const [error, setError] = useState<string | null>(null)
   const continueRef = useRef<HTMLButtonElement>(null)
 
-  const visible = decisionRef.current.ask && dismissedId !== id
+  // False while server-rendering and hydrating, so the portal never mismatches.
+  const mounted = useSyncExternalStore(
+    subscribeNever,
+    () => true,
+    () => false,
+  )
+  const visible = mounted && decisionRef.current.ask && dismissedId !== id
 
   useEffect(() => {
     if (visible) continueRef.current?.focus()
@@ -107,7 +115,7 @@ export const DraftPrompt: React.FC = () => {
     t.error,
   ])
 
-  if (!visible || typeof document === 'undefined') return null
+  if (!visible) return null
 
   return createPortal(
     <div
